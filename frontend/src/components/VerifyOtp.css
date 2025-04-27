@@ -1,0 +1,266 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
+
+.verify-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #006d77, #83c5be); /* Updated to match Login */
+  background-size: 100% 100%;
+  animation: waveFlow 12s ease infinite; /* Updated to match Login */
+  overflow: hidden;
+  position: relative;
+  font-family: 'Playfair Display', serif, Georgia !important; /* Updated to match Login */
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.verify-container::before {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  left: -20%;
+  width: 140%;
+  height: 140%;
+  background: radial-gradient(circle, rgba(0, 109, 119, 0.1) 0%, rgba(131, 197, 190, 0.05) 70%); /* Updated to match Login */
+  animation: wavePulse 6s ease-in-out infinite; /* Updated to match Login */
+}
+
+.verify-form {
+  width: 100%;
+  max-width: 500px; /* Increased from 450px */
+  min-height: 550px; /* Added to increase height */
+  background: linear-gradient(135deg, rgba(237, 246, 241, 0.9), rgba(237, 246, 241, 0.7)); /* Updated to match Login */
+  padding: 3rem; /* Increased from 2.5rem */
+  border-radius: 15px; /* Adjusted to match Login */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15), 0 0 15px rgba(0, 109, 119, 0.2); /* Updated to match Login */
+  position: relative;
+  border: 1px solid rgba(0, 109, 119, 0.5); /* Updated to match Login */
+  transition: transform 0.5s ease, box-shadow 0.5s ease; /* Updated to match Login */
+  margin: 0 auto;
+}
+
+.verify-form:hover {
+  transform: translateY(-4px); /* Updated to match Login */
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2), 0 0 20px linear-gradient(45deg, #006d77, #83c5be); /* Updated to match Login */
+}
+
+.logo-wrapper {
+  display: flex; /* Updated to match Login */
+  justify-content: center;
+  margin-bottom: 1.2rem; /* Updated to match Login */
+  padding: 0;
+}
+
+.logo {
+  height: 70px; /* Updated to match Login */
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05); /* Updated to match Login */
+}
+
+.verify-title {
+  font-family: 'Pacifico', cursive; /* Updated to match Login */
+  font-size: 2.25rem; /* Updated to match Login */
+  font-weight: 400;
+  text-align: center;
+  margin-bottom: 1.2rem; /* Updated to match Login */
+  color: #006d77; /* Updated to match Login */
+  text-shadow: 0 0 8px rgba(0, 109, 119, 0.3); /* Updated to match Login */
+}
+
+.form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem; /* Increased from 1.5rem */
+}
+
+/* Updated Label Styling for OTP */
+.form-content label {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #edf6f1; /* Updated to match Login */
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: 0 0 5px #005a63, 0 0 10px #a8e0d9, 0 0 15px #005a63; /* Updated to match Login */
+  animation: neonPulse 1.5s ease-in-out infinite alternate;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.form-content label:hover {
+  color: #f5fafa;
+  text-shadow: 0 0 10px #f5fafa, 0 0 20px #a8e0d9, 0 0 30px #005a63; /* Updated to match Login */
+}
+
+input:focus + label {
+  color: #f5fafa;
+  text-shadow: 0 0 10px #f5fafa, 0 0 20px #a8e0d9, 0 0 30px #005a63; /* Updated to match Login */
+}
+
+/* Input Styling (Updated to match Login) */
+input {
+  width: 100%;
+  padding: 0.75rem; /* Adjusted to match Login */
+  background: linear-gradient(135deg, rgba(237, 246, 241, 0.1), rgba(237, 246, 241, 0.05)); /* Updated to match Login */
+  border: 1px solid #006d77; /* Updated to match Login */
+  color: #006d77; /* Updated to match Login */
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease, box-shadow 0.3s ease;
+  font-family: 'Playfair Display', serif, Georgia !important; /* Updated to match Login */
+}
+
+input:focus {
+  border-color: #83c5be; /* Updated to match Login */
+  box-shadow: 0 0 8px linear-gradient(45deg, #006d77, #83c5be); /* Updated to match Login */
+  background: linear-gradient(135deg, rgba(237, 246, 241, 0.2), rgba(237, 246, 241, 0.1)); /* Updated to match Login */
+  outline: none;
+}
+
+input:disabled {
+  background: #e0e0e0; /* Updated to match Login */
+  cursor: not-allowed;
+}
+
+.submit-button {
+  width: 100%;
+  padding: 1rem 2rem; /* Increased horizontal padding */
+  background: linear-gradient(90deg, #006d77, #83c5be); /* Updated to match Login */
+  color: #edf6f1; /* Updated to match Login */
+  border: none;
+  border-radius: 8px; /* Updated to match Login */
+  font-size: 1rem; /* Updated to match Login */
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease; /* Updated to match Login */
+  position: relative;
+  overflow: hidden;
+  font-family: 'Playfair Display', serif, Georgia !important; /* Updated to match Login */
+}
+
+.submit-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.5s ease, height 0.5s ease;
+}
+
+.submit-button:hover::after {
+  width: 180%;
+  height: 180%;
+}
+
+.submit-button:hover {
+  background: linear-gradient(90deg, #004d57, #66b2aa); /* Updated to match Login */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px linear-gradient(45deg, #006d77, #83c5be); /* Updated to match Login */
+}
+
+.submit-button:disabled {
+  background: #ccc; /* Updated to match Login */
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.error-message {
+  color: #e63946; /* Updated to match Login */
+  font-size: 0.875rem;
+  text-align: center; /* Updated to match Login */
+  margin-bottom: 1rem; /* Updated to match Login */
+  animation: fadeIn 0.5s ease; /* Updated to match Login */
+  font-family: 'Playfair Display', serif, Georgia !important; /* Updated to match Login */
+}
+
+.back-link {
+  display: inline-block;
+  color: #006d77; /* Updated to match Login */
+  text-decoration: none;
+  font-size: 0.875rem; /* Updated to match Login */
+  font-family: 'Playfair Display', serif, Georgia !important; /* Updated to match Login */
+  transition: color 0.3s ease, text-shadow 0.3s ease; /* Updated to match Login */
+  position: relative;
+}
+
+.back-link:hover {
+  color: #83c5be; /* Updated to match Login */
+  text-shadow: 0 0 8px rgba(0, 109, 119, 0.3); /* Updated to match Login */
+}
+
+.back-link:after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background: #83c5be; /* Updated to match Login */
+  transition: width 0.3s ease;
+}
+
+.back-link:hover:after {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .verify-form {
+    padding: 2.5rem; /* Adjusted from 2rem for better balance */
+  }
+  
+  .verify-title {
+    font-size: 1.75rem;
+  }
+  
+  .logo {
+    height: 60px; /* Adjusted slightly for smaller screens */
+  }
+}
+
+/* Animations (Updated to match Login) */
+@keyframes waveFlow {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 0%; }
+}
+
+@keyframes wavePulse {
+  0% { transform: scale(1); opacity: 0.2; }
+  50% { transform: scale(1.05); opacity: 0.4; }
+  100% { transform: scale(1); opacity: 0.2; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes neonPulse {
+  from {
+    text-shadow: 0 0 5px #005a63, 0 0 10px #a8e0d9, 0 0 15px #005a63;
+  }
+  to {
+    text-shadow: 0 0 10px #005a63, 0 0 20px #a8e0d9, 0 0 30px #005a63;
+  }
+}
+
+.submit-button:active:not(:disabled) {
+  animation: submitPulse 0.3s ease;
+}
+
+@keyframes submitPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}

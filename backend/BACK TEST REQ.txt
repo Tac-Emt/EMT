@@ -1,0 +1,236 @@
+AUTH:
+
+{
+  "url": "/auth/signup",
+  "title": "Signup Request",
+  "body": {
+    "email": "user@example.com",
+    "password": "securepassword123",
+    "name": "John Doe",
+    "role": "user"
+  }
+}
+
+
+{
+  "url": "/auth/verify-otp",
+  "title": "Verify OTP Request",
+  "body": {
+    "email": "user@example.com",
+    "otp": "123456"
+  }
+}
+
+
+{
+  "url": "/auth/login",
+  "title": "Login Request",
+  "body": {
+    "email": "user@example.com",
+    "password": "securepassword123"
+  }
+}
+
+
+{
+  "url": "/auth/forgot-password",
+  "title": "Forgot Password Request",
+  "body": {
+    "email": "user@example.com"
+  }
+}
+
+
+{
+  "url": "/auth/reset-password",
+  "title": "Reset Password Request",
+  "body": {
+    "email": "user@example.com",
+    "otp": "123456",
+    "newPassword": "newsecurepassword123"
+  }
+}
+ADMIN :
+{
+  "url": "/admin/users",
+  "title": "Get All Users Request",
+  "method": "GET",
+  "body": {}
+}
+{
+  "url": "/admin/users",
+  "title": "Create User Request",
+  "method": "POST",
+  "body": {
+    "email": "newuser@example.com",
+    "password": "newpassword123",
+    "name": "Jane Doe",
+    "role": "organizer"
+  }
+}
+{
+  "url": "/admin/users/:id",
+  "title": "Update User Request",
+  "method": "PUT",
+  "body": {
+    "id": "user123",
+    "name": "Jane Updated",
+    "role": "admin"
+  }
+}
+{
+  "url": "/admin/users/:id",
+  "title": "Delete User Request",
+  "method": "DELETE",
+  "body": {}
+}
+{
+  "url": "/admin/events",
+  "title": "Get All Events Request",
+  "method": "GET",
+  "body": {}
+}
+
+{
+  "url": "/admin/events",
+  "title": "Create Event Request",
+  "method": "POST",
+  "body": {
+    "title": "Tech Conference 2025",
+    "date": "2025-05-15T10:00:00Z",
+    "status": "DRAFT", // yelzm : DRAFT, PUBLISHED, CANCELLED
+    "category": "CS", // yelzm : CS, RAS, IAS, WIE
+    "type": "CONFERENCE", // yelzm : CONGRESS, CONFERENCE, HACKATHON, NORMAL, ONLINE
+    "eventTag": "tech-conference-2025",
+    "description": "A conference for tech enthusiasts",
+    "location": "Online",
+    "image": "https://example.com/image.jpg"
+  }
+}
+{
+  "url": "/admin/events/:id",
+  "title": "Update Event Request",
+  "method": "PUT",
+  "body": {
+    "title": "Tech Conference 2025 Updated",
+    "date": "2025-05-16T10:00:00Z",
+    "status": "PUBLISHED",  
+    "eventTag": "tech-conference-2025-updated",
+    "description": "Updated conference details",
+    "location": "Online",
+    "image": "https://example.com/updated-image.jpg"
+  }
+}
+{
+  "url": "/admin/events/:id",
+  "title": "Delete Event Request",
+  "method": "DELETE",
+  "body": {}
+}
+{
+  "url": "/admin/events/:id/confirm",
+  "title": "Confirm Event Request",
+  "method": "POST",
+  "body": {
+    "status": "PUBLISHED" 
+  }
+}
+ORGANIZER : 
+{
+  "url": "/organizer/events",
+  "title": "Create Event Request",
+  "method": "POST",
+  "body": {
+    "title": "Organizer Workshop 2025",
+    "date": "2025-06-01T09:00:00Z",
+    "status": "DRAFT",     
+    "type": "NORMAL", 
+    "eventTag": "organizer-workshop-2025",
+    "description": "A workshop for organizers",
+    "location": "New York",
+    "image": "https://example.com/workshop-image.jpg"
+  }
+}
+{
+  "url": "/organizer/events/:id/confirm",
+  "title": "Confirm Event Request",
+  "method": "POST",
+  "body": {
+    "status": "PUBLISHED" 
+  }
+}
+{
+  "url": "/organizer/events",
+  "title": "Get All Events Request",
+  "method": "GET",
+  "body": {}
+}
+{
+  "url": "/organizer/events/:id",
+  "title": "Get Event Request",
+  "method": "GET",
+  "body": {}
+}
+{
+  "url": "/organizer/events/:id",
+  "title": "Update Event Request",
+  "method": "PUT",
+  "body": {
+    "title": "Organizer Workshop 2025 Updated",
+    "date": "2025-06-02T09:00:00Z",
+    "status": "DRAFT",       
+    "type": "NORMAL",
+    "eventTag": "organizer-workshop-2025-updated",
+    "description": "Updated workshop details",
+    "location": "New York",
+    "image": "https://example.com/updated-workshop-image.jpg"
+  }
+}
+{
+  "url": "/organizer/events/:id",
+  "title": "Delete Event Request",
+  "method": "DELETE",
+  "body": {}
+}
+
+{
+  "url": "/organizer/events",
+  "title": "Create Event with Collaboration Invitation Request",
+  "method": "POST",
+  "body": {
+    "title": "Collaborative Workshop 2025",
+    "description": "A workshop with multiple organizers",
+    "date": "2025-07-01T09:00:00Z",
+    "status": "DRAFT",
+    "location": "Online",
+    "imageUrl": "https://example.com/workshop-image.jpg",
+    "category": "RAS",
+    "type": "NORMAL",
+    "collaboratorIds": "2,3" // IDs of two organizers to invite
+  }
+}
+{
+  "url": "/organizer/events/1/confirm",
+  "title": "Confirm Event Participation (Accept) or decline Request",
+  "method": "POST",
+  "body": {
+    "confirm": true or false
+  }
+}
+FEED : 
+{
+  "url": "/feed/events?organizerIds=1,2&categories=CS,IAS&types=CONFERENCE,ONLINE",
+  "title": "Get Events with All Filters Request",
+  "method": "GET",
+  "queryParams": {
+    "organizerIds": "1,2",
+    "categories": "CS,IAS",
+    "types": "CONFERENCE,ONLINE"
+  }
+}
+{
+  "url": "/feed/filters",
+  "title": "Get Filters Request",
+  "method": "GET",
+  "body": {}
+}

@@ -1,0 +1,74 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+enum EventCategory {
+  CS
+  RAS
+  IAS
+  WIE
+}
+
+enum EventType {
+  CONGRESS
+  CONFERENCE
+  HACKATHON
+  NORMAL
+  ONLINE
+}
+
+enum Role {
+  USER
+  ORGANIZER
+  ADMIN
+}
+
+model User {
+  id              Int               @id @default(autoincrement())
+  email           String            @unique
+  password        String
+  name            String
+  role            Role              @default(USER)
+  isEmailVerified Boolean           @default(false)
+  otp             String?
+  otpExpires      DateTime?
+  passwordResetAt DateTime?
+  organizedEvents EventOrganizer[]  @relation("EventOrganizers")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now())
+}
+
+model Event {
+  id          Int               @id @default(autoincrement())
+  title       String
+  description String?
+  date        DateTime
+  status      EventStatus       @default(DRAFT)
+  location    String?
+  image       String?
+  category    EventCategory
+  type        EventType
+  eventTag    String
+  organizers  EventOrganizer[]  @relation("EventOrganizers")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model EventOrganizer {
+  event              Event      @relation(fields: [eventId], references: [id], onDelete: Cascade, name: "EventOrganizers")
+  eventId            Int
+  organizer          User       @relation("EventOrganizers", fields: [organizerId], references: [id], onDelete: Cascade)
+  organizerId        Int
+  isHost             Boolean    @default(false)
+  pendingConfirmation Boolean    @default(false)
+  expiresAt          DateTime?
+  createdAt          DateTime   @default(now())
+  @@id([eventId, organizerId])
+}
