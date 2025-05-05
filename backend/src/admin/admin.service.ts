@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ConflictException, 
 import { PrismaService } from '../prisma.service';
 import { UserService } from '../user/user.service';
 import { EmailService } from '../email/email.service';
-import { EventStatus, EventCategory, EventType, Role } from '@prisma/client';
+import { EventStatus, EventCategory, EventType, Role } from '.prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as fs from 'fs/promises';
 import * as path from 'path';

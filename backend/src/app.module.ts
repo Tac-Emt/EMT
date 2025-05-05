@@ -8,7 +8,13 @@ import { AuthModule } from './auth/auth.module';
 import { FeedModule } from './feed/feed.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { EmailModule } from './email/email.module';
-import { EventModule } from './organizer/organizer.module';
+import { EventModule } from './event/event.module';
+import { RegistrationModule } from './registration/registration.module';
+import { SpeakerModule } from './speaker/speaker.module';
+import { ResourceModule } from './resource/resource.module';
+import { EventTaskModule } from './event-task/event-task.module';
+import { CheckInModule } from './check-in/check-in.module';
+import { FileUploadModule } from './file-upload/file-upload.module';
 import { PrismaService } from './prisma.service';
 
 @Module({
@@ -25,6 +31,12 @@ import { PrismaService } from './prisma.service';
     SchedulerModule,
     EmailModule,
     EventModule,
+    RegistrationModule,
+    SpeakerModule,
+    ResourceModule,
+    EventTaskModule,
+    CheckInModule,
+    FileUploadModule,
   ],
   providers: [PrismaService],
 })

@@ -22,7 +22,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { EventService } from './organizer.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OrganizerGuard } from '../auth/guards/organizer.guard';
-import { EventStatus, EventCategory, EventType } from '@prisma/client';
+import { EventStatus, EventCategory, EventType } from '.prisma/client';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { RolesGuard } from '../auth/roles.guard';

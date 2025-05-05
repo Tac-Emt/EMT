@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { EmailService } from '../email/email.service';
-import { EventStatus, EventCategory, EventType } from '@prisma/client';
+import { EventStatus, EventCategory, EventType } from '.prisma/client';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 

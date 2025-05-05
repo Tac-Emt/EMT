@@ -1,31 +1,23 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import * as path from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
- 
-  app.enableCors({
-    origin: 'http://localhost:3001',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Authorization',
-    credentials: true,
+  
+  // Enable CORS
+  app.enableCors();
+  
+  // Enable validation
+  app.useGlobalPipes(new ValidationPipe());
+  
+  // Serve static files
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
   });
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: false,
-      transform: true,
-    }),
-  );
-  app.useStaticAssets(path.join(__dirname, '..', 'Uploads'), {
-      prefix: '/uploads/',
-    });
+  
   await app.listen(3000);
   console.log('Backend running on http://localhost:3000');
 }

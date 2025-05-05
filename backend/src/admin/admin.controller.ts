@@ -20,7 +20,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
-import { EventStatus, EventCategory, EventType, Role } from '@prisma/client';
+import { EventStatus, EventCategory, EventType, Role } from '.prisma/client';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 

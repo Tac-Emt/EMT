@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { TaskStatus } from '@prisma/client';
+import { TaskStatus } from '.prisma/client';
 
 @Injectable()
 export class EventTaskService {
