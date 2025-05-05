@@ -1,3 +1,7 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -28,6 +32,7 @@ enum Role {
   USER
   ORGANIZER
   ADMIN
+  SPEAKER
 }
 
 model User {
@@ -41,24 +46,169 @@ model User {
   otpExpires      DateTime?
   passwordResetAt DateTime?
   organizedEvents EventOrganizer[]  @relation("EventOrganizers")
+  speakingEvents  EventSpeaker[]    @relation("EventSpeakers")
+  assignedTasks   EventTask[]       @relation("AssignedTasks")
+  registrations   Registration[]    @relation("UserRegistrations")
+  speakerProfile  SpeakerProfile?   @relation("UserSpeakerProfile")
+  speakerFeedback SpeakerFeedback[] @relation("UserSpeakerFeedback")
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @default(now())
 }
 
 model Event {
-  id          Int               @id @default(autoincrement())
+  id              Int               @id @default(autoincrement())
+  title           String
+  description     String?
+  date            DateTime
+  status          EventStatus       @default(DRAFT)
+  location        String?
+  image           String?
+  category        EventCategory
+  type            EventType
+  eventTag        String
+  registrationLink String?
+  slug            String?           @unique
+  pageContent     Json?             // For storing custom page content
+  pageSettings    Json?             // For storing page settings like theme, layout, etc.
+  organizers      EventOrganizer[]  @relation("EventOrganizers")
+  speakers        EventSpeaker[]    @relation("EventSpeakers")
+  series          EventSeries?      @relation(fields: [seriesId], references: [id])
+  seriesId        Int?
+  registrationTypes RegistrationType[]
+  checkInCodes    CheckInCode[]
+  eventResources  EventResource[]
+  tasks           EventTask[]
+  analytics       EventAnalytics?
+  registrations   Registration[]    @relation("EventRegistrations")
+  speakerFeedback SpeakerFeedback[] @relation("EventSpeakerFeedback")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model EventSeries {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  events      Event[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RegistrationType {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Float?
+  capacity    Int?
+  startDate   DateTime
+  endDate     DateTime
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     Int
+  registrations Registration[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CheckInCode {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     Int
+  used        Boolean  @default(false)
+  usedAt      DateTime?
+  registration Registration?
+  createdAt   DateTime @default(now())
+}
+
+model EventResource {
+  id          Int      @id @default(autoincrement())
+  title       String
+  type        String   // PDF, VIDEO, IMAGE, etc.
+  url         String
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     Int
+  createdAt   DateTime @default(now())
+}
+
+model EventTask {
+  id          Int      @id @default(autoincrement())
   title       String
   description String?
-  date        DateTime
-  status      EventStatus       @default(DRAFT)
-  location    String?
-  image       String?
-  category    EventCategory
-  type        EventType
-  eventTag    String
-  organizers  EventOrganizer[]  @relation("EventOrganizers")
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  status      TaskStatus @default(PENDING)
+  assignedTo  User     @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  assignedToId Int
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     Int
+  dueDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EventAnalytics {
+  id          Int      @id @default(autoincrement())
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     Int      @unique
+  views       Int      @default(0)
+  registrations Int    @default(0)
+  checkIns    Int      @default(0)
+  lastUpdated DateTime @updatedAt
+}
+
+model Registration {
+  id          Int      @id @default(autoincrement())
+  event       Event    @relation("EventRegistrations", fields: [eventId], references: [id])
+  eventId     Int
+  user        User     @relation("UserRegistrations", fields: [userId], references: [id])
+  userId      Int
+  type        RegistrationType @relation(fields: [typeId], references: [id])
+  typeId      Int
+  status      RegistrationStatus @default(PENDING)
+  checkInCode CheckInCode? @relation(fields: [checkInCodeId], references: [id])
+  checkInCodeId Int?     @unique
+  checkedIn   Boolean  @default(false)
+  checkedInAt DateTime?
+  groupId     String?  // For group registrations
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SpeakerProfile {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation("UserSpeakerProfile", fields: [userId], references: [id])
+  userId      Int      @unique
+  bio         String?
+  expertise   String[]
+  availability Json?   // Store availability calendar
+  rating      Float    @default(0)
+  totalRatings Int     @default(0)
+  agreement   String?  // URL to signed agreement
+  paymentInfo Json?    // Payment details
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SpeakerFeedback {
+  id          Int      @id @default(autoincrement())
+  event       Event    @relation("EventSpeakerFeedback", fields: [eventId], references: [id])
+  eventId     Int
+  speaker     User     @relation("UserSpeakerFeedback", fields: [speakerId], references: [id])
+  speakerId   Int
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now())
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum RegistrationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  WAITLISTED
 }
 
 model EventOrganizer {
@@ -71,4 +221,23 @@ model EventOrganizer {
   expiresAt          DateTime?
   createdAt          DateTime   @default(now())
   @@id([eventId, organizerId])
+}
+
+model EventSpeaker {
+  event           Event      @relation(fields: [eventId], references: [id], onDelete: Cascade, name: "EventSpeakers")
+  eventId         Int
+  speaker         User       @relation("EventSpeakers", fields: [speakerId], references: [id], onDelete: Cascade)
+  speakerId       Int
+  status          SpeakerStatus @default(PENDING)
+  topic           String?
+  description     String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  @@id([eventId, speakerId])
+}
+
+enum SpeakerStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }

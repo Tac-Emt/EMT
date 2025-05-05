@@ -117,94 +117,28 @@ export class AdminController {
   }
 
   @Post('events')
-  @UseInterceptors(
-    FileInterceptor('image', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = extname(file.originalname);
-          cb(null, `image-${uniqueSuffix}${ext}`);
-        },
-      }),
-      fileFilter: (req, file, cb) => {
-        if (!file.mimetype.match(/\/(jpg|jpeg|png)$/)) {
-          return cb(new BadRequestException('Only JPG, JPEG, and PNG files are allowed'), false);
-        }
-        cb(null, true);
-      },
-      limits: { fileSize: 5 * 1024 * 1024 },
-    }),
-  )
+  @Roles('ADMIN')
   async createEvent(
-    @UploadedFile() file: Express.Multer.File,
-    @Body()
-    body: {
+    @Body() data: {
       title: string;
       description?: string;
       date: string;
-      organizerId: string;
-      collaboratorIds?: string;
-      status?: string;
       location?: string;
-      category: string;
-      type: string;
-      existingImageUrl?: string; // New field for reusing existing images
+      image?: string;
+      category: EventCategory;
+      type: EventType;
+      eventTag: string;
+      registrationLink?: string;
+      pageContent?: any;
+      pageSettings?: any;
+      organizerIds: number[];
+      speakerRequests?: { speakerId: number; topic?: string; description?: string }[];
     },
   ) {
     try {
-      const { title, description, date, organizerId, collaboratorIds, status, location, category, type, existingImageUrl } = body;
-
-      if (!title || typeof title !== 'string' || title.trim().length === 0) {
-        throw new BadRequestException('Title is required and must be a non-empty string');
-      }
-      if (!date || isNaN(new Date(date).getTime())) {
-        throw new BadRequestException('Date is required and must be a valid ISO date string');
-      }
-      if (!organizerId) {
-        throw new BadRequestException('Organizer ID is required');
-      }
-      if (!category || !Object.values(EventCategory).includes(category as EventCategory)) {
-        throw new BadRequestException(`Category must be one of ${Object.values(EventCategory).join(', ')}`);
-      }
-      if (!type || !Object.values(EventType).includes(type as EventType)) {
-        throw new BadRequestException(`Type must be one of ${Object.values(EventType).join(', ')}`);
-      }
-
-      const parsedOrganizerId = parseInt(organizerId);
-      if (isNaN(parsedOrganizerId)) {
-        throw new BadRequestException('Organizer ID must be a valid integer');
-      }
-
-      let parsedCollaboratorIds: number[] | undefined;
-      if (collaboratorIds) {
-        parsedCollaboratorIds = collaboratorIds.split(',').map(id => parseInt(id.trim()));
-        if (parsedCollaboratorIds.some(isNaN)) {
-          throw new BadRequestException('Collaborator IDs must be valid integers');
-        }
-      }
-
-      const validatedStatus = status ? this.validateEventStatus(status) : undefined;
-      const validatedCategory = category as EventCategory;
-      const validatedType = type as EventType;
-      // Use existingImageUrl if provided, else use uploaded file path
-      const imagePath = existingImageUrl || (file ? `/uploads/${file.filename}` : undefined);
-
-      console.log('ℹ️ [AdminController] Creating event:', { title, date, organizerId: parsedOrganizerId, collaboratorIds: parsedCollaboratorIds, imagePath });
-      const newEvent = await this.adminService.createEvent({
-        title,
-        description: description || '',
-        date,
-        organizerId: parsedOrganizerId,
-        collaboratorIds: parsedCollaboratorIds,
-        status: validatedStatus,
-        location,
-        image: imagePath,
-        category: validatedCategory,
-        type: validatedType,
-      });
-
-      return { message: 'Event created successfully', data: newEvent };
+      console.log('ℹ️ [AdminController] Creating event:', { data });
+      const event = await this.adminService.createEvent(data);
+      return { message: 'Event created successfully', data: event };
     } catch (error) {
       console.error('🚨 [AdminController] Error creating event:', error.message);
       if (error instanceof BadRequestException) throw error;
@@ -245,14 +179,17 @@ export class AdminController {
       location?: string;
       category?: string;
       type?: string;
-      existingImageUrl?: string; // New field for reusing existing images
+      existingImageUrl?: string;
+      registrationLink?: string;
+      pageContent?: any;
+      pageSettings?: any;
     },
   ) {
     try {
       const eventId = parseInt(id);
       if (isNaN(eventId)) throw new BadRequestException('Event ID must be a valid integer');
 
-      const { title, description, date, organizerId, status, location, category, type, existingImageUrl } = body;
+      const { title, description, date, organizerId, status, location, category, type, existingImageUrl, registrationLink, pageContent, pageSettings } = body;
 
       if (title && (typeof title !== 'string' || title.trim().length === 0)) {
         throw new BadRequestException('Title must be a non-empty string');
@@ -289,6 +226,9 @@ export class AdminController {
         image: imagePath,
         category: validatedCategory,
         type: validatedType,
+        registrationLink,
+        pageContent,
+        pageSettings,
       });
 
       return { message: 'Event updated successfully', data: updatedEvent };

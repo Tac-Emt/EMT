@@ -1,102 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { UserService } from '../user/user.service';
 import { EmailService } from '../email/email.service';
-import { EventStatus, EventCategory, EventType, Role } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { EventStatus, EventCategory, EventType } from '@prisma/client';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 @Injectable()
-export class AdminService {
+export class EventService {
   constructor(
     private prisma: PrismaService,
-    private userService: UserService,
     private emailService: EmailService,
   ) {}
 
-  async getAllUsers() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        isEmailVerified: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-  }
-
-  async createUser(email: string, password: string, name: string, role: Role) {
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
-    }
-    if (!email || !password || !name || !role) {
-      throw new BadRequestException('Email, password, name, and role are required');
-    }
-    if (!Object.values(Role).includes(role)) {
-      throw new BadRequestException(`Invalid role value: ${role}. Must be one of ${Object.values(Role).join(', ')}`);
-    }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    return this.prisma.user.create({
-      data: { email, password: hashedPassword, name, role },
-      select: { id: true, email: true, name: true, role: true, isEmailVerified: true, createdAt: true, updatedAt: true },
-    });
-  }
-
-  async updateUser(id: number, data: { email?: string; name?: string; role?: string }) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    if (data.email) {
-      const existingUser = await this.prisma.user.findUnique({ where: { email: data.email } });
-      if (existingUser && existingUser.id !== id) {
-        throw new ConflictException('Email is already in use by another user');
-      }
-    }
-    if (data.role) {
-      const validRoles = Object.values(Role);
-      if (!validRoles.includes(data.role as Role)) {
-        throw new BadRequestException(`Invalid role value: ${data.role}. Must be one of ${validRoles.join(', ')}`);
-      }
-    }
-    return this.prisma.user.update({
-      where: { id },
-      data: { email: data.email, name: data.name, role: data.role as Role },
-      select: { id: true, email: true, name: true, role: true, isEmailVerified: true, createdAt: true, updatedAt: true },
-    });
-  }
-
-  async deleteUser(id: number) {
-    return this.userService.deleteUser(id);
-  }
-
-  async getAllEvents() {
-    const currentDate = new Date();
-    const events = await this.prisma.event.findMany({
-      include: { organizers: { include: { organizer: { select: { id: true, name: true } } } } },
-      orderBy: { date: 'asc' },
-    });
-
-    for (const event of events) {
-      const eventDate = new Date(event.date);
-      if (eventDate < currentDate && event.status !== EventStatus.DRAFT) {
-        await this.prisma.event.update({
-          where: { id: event.id },
-          data: { status: EventStatus.DRAFT },
-        });
-        event.status = EventStatus.DRAFT;
-      }
-    }
-
-    return events;
-  }
-
   async createEvent(
+    organizerId: number,
     data: {
       title: string;
       description?: string;
@@ -109,12 +26,12 @@ export class AdminService {
       registrationLink?: string;
       pageContent?: any;
       pageSettings?: any;
-      organizerIds: number[];
+      collaboratorIds?: number[];
       speakerRequests?: { speakerId: number; topic?: string; description?: string }[];
     },
   ) {
     try {
-      console.log('ℹ️ [AdminService] Creating event:', { data });
+      console.log('ℹ️ [OrganizerService] Creating event:', { organizerId, data });
 
       // Validate date format
       const eventDate = new Date(data.date);
@@ -127,22 +44,10 @@ export class AdminService {
         throw new BadRequestException('Registration link must start with http');
       }
 
-      // Validate organizers
-      const organizers = await this.prisma.user.findMany({
-        where: {
-          id: { in: data.organizerIds },
-          role: 'ORGANIZER',
-        },
-      });
-
-      if (organizers.length !== data.organizerIds.length) {
-        throw new BadRequestException('One or more invalid organizer IDs');
-      }
-
       // Generate slug from title
       const slug = this.generateSlug(data.title);
 
-      // Create event with organizers
+      // Create event with host organizer
       const event = await this.prisma.event.create({
         data: {
           title: data.title,
@@ -158,10 +63,10 @@ export class AdminService {
           pageContent: data.pageContent,
           pageSettings: data.pageSettings,
           organizers: {
-            create: data.organizerIds.map((organizerId, index) => ({
+            create: {
               organizerId,
-              isHost: index === 0, // First organizer is the host
-            })),
+              isHost: true,
+            },
           },
           speakers: data.speakerRequests ? {
             create: data.speakerRequests.map(request => ({
@@ -214,18 +119,9 @@ export class AdminService {
         }
       }
 
-      // Send email notifications to organizers
-      for (const organizer of organizers) {
-        await this.emailService.sendMail({
-          to: organizer.email,
-          subject: `New Event Assignment: ${data.title}`,
-          text: `You have been assigned as ${organizer.id === data.organizerIds[0] ? 'host' : 'organizer'} for the event "${data.title}".`,
-        });
-      }
-
       return event;
     } catch (error) {
-      console.error('🚨 [AdminService] Error creating event:', error.message);
+      console.error('🚨 [OrganizerService] Error creating event:', error.message);
       if (error instanceof BadRequestException) throw error;
       throw new InternalServerErrorException('Failed to create event: ' + error.message);
     }
@@ -242,7 +138,7 @@ export class AdminService {
   async confirmEventParticipation(eventId: number, organizerId: number, confirm: boolean) {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
-      include: { organizers: { include: { organizer: true } } },
+      include: { organizers: { include: { organizer: { select: { id: true, email: true, name: true } } } } },
     });
     if (!event || event.status !== 'DRAFT') {
       throw new NotFoundException('Event not found or not in DRAFT status');
@@ -263,19 +159,19 @@ export class AdminService {
           const filePath = path.join(process.cwd(), event.image);
           try {
             await fs.unlink(filePath);
-            console.log(`ℹ️ [AdminService] Deleted image file: ${filePath}`);
+            console.log(`ℹ️ [EventService] Deleted image file: ${filePath}`);
           } catch (err) {
-            console.error(`🚨 [AdminService] Error deleting image file: ${filePath}`, err.message);
+            console.error(`🚨 [EventService] Error deleting image file: ${filePath}`, err.message);
           }
         }
       }
       await this.prisma.event.delete({ where: { id: eventId } });
       const host = event.organizers.find(o => o.isHost).organizer;
-      await this.emailService.sendMail({
-        to: host.email,
-        subject: `Event "${event.title}" Declined`,
-        text: `The event "${event.title}" was deleted because a collaborator declined.`,
-      });
+      await this.emailService.sendHostNotification(
+        host.email,
+        event.title,
+        `The event "${event.title}" was deleted because a collaborator declined.`,
+      );
       return { message: 'Event declined and deleted' };
     }
 
@@ -286,7 +182,11 @@ export class AdminService {
 
     const updatedEvent = await this.prisma.event.findUnique({
       where: { id: eventId },
-      include: { organizers: true },
+      include: {
+        organizers: {
+          include: { organizer: { select: { id: true, email: true, name: true } } },
+        },
+      },
     });
     const allConfirmed = updatedEvent.organizers.every(o => !o.pendingConfirmation);
 
@@ -295,41 +195,131 @@ export class AdminService {
         where: { id: eventId },
         data: { status: EventStatus.PUBLISHED },
       });
-      const hostId = updatedEvent.organizers.find(o => o.isHost).organizerId;
-      const host = await this.prisma.user.findUnique({ where: { id: hostId } });
-      await this.emailService.sendMail({
-        to: host.email,
-        subject: `Event "${event.title}" Published`,
-        text: `The event "${event.title}" is now PUBLISHED with all organizers confirmed.`,
-      });
+      const host = updatedEvent.organizers.find(o => o.isHost).organizer;
+      await this.emailService.sendHostNotification(
+        host.email,
+        event.title,
+        `The event "${event.title}" is now PUBLISHED with all organizers confirmed.`,
+      );
     }
 
-    return { message: confirm ? 'Participation confirmed' : 'Participation declined' };
+    return { message: 'Participation confirmed' };
+  }
+
+  async getOrganizerEvents(organizerId: number, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [events, total] = await Promise.all([
+      this.prisma.event.findMany({
+        where: {
+          organizers: { some: { organizerId } },
+        },
+        include: {
+          organizers: {
+            include: { organizer: { select: { id: true, name: true } } },
+          },
+        },
+        orderBy: { date: 'asc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.event.count({
+        where: {
+          organizers: { some: { organizerId } },
+        },
+      }),
+    ]);
+
+    const statusBreakdown = await this.prisma.event.groupBy({
+      by: ['status'],
+      where: { organizers: { some: { organizerId } } },
+      _count: { status: true },
+    });
+
+    const categoryBreakdown = await this.prisma.event.groupBy({
+      by: ['category'],
+      where: { organizers: { some: { organizerId } } },
+      _count: { category: true },
+    });
+
+    const typeBreakdown = await this.prisma.event.groupBy({
+      by: ['type'],
+      where: { organizers: { some: { organizerId } } },
+      _count: { type: true },
+    });
+
+    const upcomingEvents = await this.prisma.event.count({
+      where: {
+        organizers: { some: { organizerId } },
+        status: EventStatus.PUBLISHED,
+        date: { gt: new Date() },
+      },
+    });
+
+    return {
+      events,
+      total,
+      statusBreakdown: statusBreakdown.map(item => [item.status, item._count.status]),
+      categoryBreakdown: categoryBreakdown.map(item => [item.category, item._count.category]),
+      typeBreakdown: typeBreakdown.map(item => [item.type, item._count.type]),
+      upcomingEvents,
+    };
+  }
+
+  async getEventById(id: number) {
+    const event = await this.prisma.event.findUnique({
+      where: { id },
+      include: {
+        organizers: {
+          include: { organizer: { select: { id: true, name: true } } },
+        },
+      },
+    });
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+    return event;
   }
 
   async updateEvent(
-    id: number,
+    eventId: number,
+    organizerId: number,
     data: {
       title?: string;
       description?: string;
       date?: string;
       status?: EventStatus;
-      organizerId?: number;
       location?: string;
       image?: string;
       category?: EventCategory;
       type?: EventType;
+      collaboratorIds?: number[];
       registrationLink?: string;
       pageContent?: any;
       pageSettings?: any;
     },
   ) {
     const event = await this.prisma.event.findUnique({
-      where: { id },
-      include: { organizers: { select: { organizerId: true, isHost: true } } },
+      where: { id: eventId },
+      include: {
+        organizers: {
+          include: { organizer: true },
+        },
+      },
     });
+
     if (!event) {
       throw new NotFoundException('Event not found');
+    }
+
+    const isHost = event.organizers.some(
+      (o) => o.organizerId === organizerId && o.isHost,
+    );
+    if (!isHost) {
+      throw new ForbiddenException('Only the host can update the event');
+    }
+
+    if (event.status === EventStatus.CANCELLED) {
+      throw new BadRequestException('Cannot update a cancelled event');
     }
 
     if (data.date) {
@@ -337,44 +327,58 @@ export class AdminService {
       if (isNaN(eventDate.getTime())) {
         throw new BadRequestException('Invalid date format');
       }
-      data.date = eventDate.toISOString();
     }
 
-    // Validate registration link if provided
     if (data.registrationLink && !data.registrationLink.startsWith('http')) {
       throw new BadRequestException('Invalid registration link. Must be a valid URL starting with http');
     }
 
-    // Validate image path if provided
     if (data.image && !data.image.startsWith('/uploads/')) {
       throw new BadRequestException('Invalid image URL. Must start with /uploads/');
     }
 
-    // Validate page content and settings if provided
     if (data.pageContent && typeof data.pageContent !== 'object') {
       throw new BadRequestException('Page content must be a valid JSON object');
     }
+
     if (data.pageSettings && typeof data.pageSettings !== 'object') {
       throw new BadRequestException('Page settings must be a valid JSON object');
     }
 
     const updateData: any = { ...data };
+    if (data.date) {
+      updateData.date = new Date(data.date);
+    }
+
     if (data.category && data.type) {
       updateData.eventTag = `${data.category}-${data.type}`;
     }
 
-    return this.prisma.event.update({
-      where: { id },
+    const updatedEvent = await this.prisma.event.update({
+      where: { id: eventId },
       data: updateData,
-      include: { organizers: { include: { organizer: { select: { id: true, name: true } } } } },
+      include: {
+        organizers: {
+          include: { organizer: { select: { id: true, name: true, email: true } } },
+        },
+      },
     });
+
+    return updatedEvent;
   }
 
-  async deleteEvent(id: number) {
-    const event = await this.prisma.event.findUnique({ where: { id } });
+  async deleteEvent(id: number, organizerId: number) {
+    const event = await this.prisma.event.findUnique({
+      where: { id },
+      include: { organizers: { select: { organizerId: true, isHost: true } } },
+    });
     if (!event) {
       throw new NotFoundException('Event not found');
     }
+    if (!event.organizers.some(o => o.organizerId === organizerId && o.isHost)) {
+      throw new ForbiddenException('Only the host organizer can delete this event');
+    }
+
     // Delete the image file if it exists and is not used by other events
     if (event.image) {
       const otherEvents = await this.prisma.event.findMany({
@@ -384,12 +388,13 @@ export class AdminService {
         const filePath = path.join(process.cwd(), event.image);
         try {
           await fs.unlink(filePath);
-          console.log(`ℹ️ [AdminService] Deleted image file: ${filePath}`);
+          console.log(`ℹ️ [EventService] Deleted image file: ${filePath}`);
         } catch (err) {
-          console.error(`🚨 [AdminService] Error deleting image file: ${filePath}`, err.message);
+          console.error(`🚨 [EventService] Error deleting image file: ${filePath}`, err.message);
         }
       }
     }
+
     await this.prisma.event.delete({ where: { id } });
     return { message: 'Event deleted successfully' };
   }

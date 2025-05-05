@@ -8,7 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { FeedModule } from './feed/feed.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { EmailModule } from './email/email.module';
-import { EventModule } from './event/event.module';
+import { EventModule } from './organizer/organizer.module';
 import { PrismaService } from './prisma.service';
 
 @Module({
