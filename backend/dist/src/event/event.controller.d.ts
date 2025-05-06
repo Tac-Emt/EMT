@@ -1,167 +1,125 @@
-/// <reference types="multer" />
 import { EventService } from './event.service';
 export declare class EventController {
-    private eventService;
+    private readonly eventService;
     constructor(eventService: EventService);
-    createEvent(req: any, file: Express.Multer.File, body: {
+    create(data: any): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
         title: string;
-        description?: string;
-        date: string;
-        status?: string;
-        location?: string;
-        category: string;
-        type: string;
-        collaboratorIds?: string;
-        existingImageUrl?: string;
-    }): Promise<{
-        message: string;
-        event: {
-            organizers: ({
-                organizer: {
-                    id: number;
-                    email: string;
-                    name: string;
-                };
-            } & {
-                createdAt: Date;
-                isHost: boolean;
-                pendingConfirmation: boolean;
-                expiresAt: Date;
-                organizerId: number;
-                eventId: number;
-            })[];
-        } & {
-            id: number;
-            createdAt: Date;
-            updatedAt: Date;
-            title: string;
-            description: string;
-            date: Date;
-            status: import(".prisma/client").$Enums.EventStatus;
-            location: string;
-            image: string;
-            category: import(".prisma/client").$Enums.EventCategory;
-            type: import(".prisma/client").$Enums.EventType;
-            eventTag: string;
-        };
+        description: string;
+        date: Date;
+        location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
+        image: string;
+        agenda: import("@prisma/client/runtime/library").JsonValue;
+        resources: import("@prisma/client/runtime/library").JsonValue;
+        category: import(".prisma/client").$Enums.EventCategory;
+        type: import(".prisma/client").$Enums.EventType;
+        eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: import("@prisma/client/runtime/library").JsonValue;
+        pageSettings: import("@prisma/client/runtime/library").JsonValue;
     }>;
-    confirmEventParticipation(req: any, id: string, body: {
-        confirm: boolean;
-    }): Promise<{
-        message: string;
-        event: any;
+    findAll(): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        date: Date;
+        location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
+        image: string;
+        agenda: import("@prisma/client/runtime/library").JsonValue;
+        resources: import("@prisma/client/runtime/library").JsonValue;
+        category: import(".prisma/client").$Enums.EventCategory;
+        type: import(".prisma/client").$Enums.EventType;
+        eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: import("@prisma/client/runtime/library").JsonValue;
+        pageSettings: import("@prisma/client/runtime/library").JsonValue;
+    }[]>;
+    findOne(id: string): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        date: Date;
+        location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
+        image: string;
+        agenda: import("@prisma/client/runtime/library").JsonValue;
+        resources: import("@prisma/client/runtime/library").JsonValue;
+        category: import(".prisma/client").$Enums.EventCategory;
+        type: import(".prisma/client").$Enums.EventType;
+        eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: import("@prisma/client/runtime/library").JsonValue;
+        pageSettings: import("@prisma/client/runtime/library").JsonValue;
     }>;
-    getEvents(req: any, page?: string, limit?: string): Promise<{
-        events: ({
-            organizers: ({
-                organizer: {
-                    id: number;
-                    name: string;
-                };
-            } & {
-                createdAt: Date;
-                isHost: boolean;
-                pendingConfirmation: boolean;
-                expiresAt: Date;
-                organizerId: number;
-                eventId: number;
-            })[];
-        } & {
-            id: number;
-            createdAt: Date;
-            updatedAt: Date;
-            title: string;
-            description: string;
-            date: Date;
-            status: import(".prisma/client").$Enums.EventStatus;
-            location: string;
-            image: string;
-            category: import(".prisma/client").$Enums.EventCategory;
-            type: import(".prisma/client").$Enums.EventType;
-            eventTag: string;
-        })[];
-        total: number;
-        statusBreakdown: (number | import(".prisma/client").$Enums.EventStatus)[][];
-        categoryBreakdown: (number | import(".prisma/client").$Enums.EventCategory)[][];
-        typeBreakdown: (number | import(".prisma/client").$Enums.EventType)[][];
-        upcomingEvents: number;
+    update(id: string, data: any): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        date: Date;
+        location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
+        image: string;
+        agenda: import("@prisma/client/runtime/library").JsonValue;
+        resources: import("@prisma/client/runtime/library").JsonValue;
+        category: import(".prisma/client").$Enums.EventCategory;
+        type: import(".prisma/client").$Enums.EventType;
+        eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: import("@prisma/client/runtime/library").JsonValue;
+        pageSettings: import("@prisma/client/runtime/library").JsonValue;
     }>;
-    getEventById(req: any, id: string): Promise<{
-        message: string;
-        event: {
-            organizers: ({
-                organizer: {
-                    id: number;
-                    name: string;
-                };
-            } & {
-                createdAt: Date;
-                isHost: boolean;
-                pendingConfirmation: boolean;
-                expiresAt: Date;
-                organizerId: number;
-                eventId: number;
-            })[];
-        } & {
-            id: number;
-            createdAt: Date;
-            updatedAt: Date;
-            title: string;
-            description: string;
-            date: Date;
-            status: import(".prisma/client").$Enums.EventStatus;
-            location: string;
-            image: string;
-            category: import(".prisma/client").$Enums.EventCategory;
-            type: import(".prisma/client").$Enums.EventType;
-            eventTag: string;
-        };
+    remove(id: string): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        date: Date;
+        location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
+        image: string;
+        agenda: import("@prisma/client/runtime/library").JsonValue;
+        resources: import("@prisma/client/runtime/library").JsonValue;
+        category: import(".prisma/client").$Enums.EventCategory;
+        type: import(".prisma/client").$Enums.EventType;
+        eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: import("@prisma/client/runtime/library").JsonValue;
+        pageSettings: import("@prisma/client/runtime/library").JsonValue;
     }>;
-    updateEvent(req: any, id: string, file: Express.Multer.File, body: {
-        title?: string;
-        description?: string;
-        date?: string;
-        status?: string;
-        location?: string;
-        category?: string;
-        type?: string;
-        existingImageUrl?: string;
-    }): Promise<{
-        message: string;
-        event: {
-            organizers: ({
-                organizer: {
-                    id: number;
-                    name: string;
-                };
-            } & {
-                createdAt: Date;
-                isHost: boolean;
-                pendingConfirmation: boolean;
-                expiresAt: Date;
-                organizerId: number;
-                eventId: number;
-            })[];
-        } & {
-            id: number;
-            createdAt: Date;
-            updatedAt: Date;
-            title: string;
-            description: string;
-            date: Date;
-            status: import(".prisma/client").$Enums.EventStatus;
-            location: string;
-            image: string;
-            category: import(".prisma/client").$Enums.EventCategory;
-            type: import(".prisma/client").$Enums.EventType;
-            eventTag: string;
-        };
-    }>;
-    deleteEvent(req: any, id: string): Promise<{
-        message: string;
-        details: {
-            message: string;
-        };
-    }>;
-    private validateEventStatus;
 }

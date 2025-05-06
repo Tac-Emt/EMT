@@ -12,7 +12,7 @@ const admin_controller_1 = require("./admin.controller");
 const admin_service_1 = require("./admin.service");
 const user_module_1 = require("../user/user.module");
 const email_module_1 = require("../email/email.module");
-const prisma_service_1 = require("../prisma.service");
+const prisma_service_1 = require("../prisma/prisma.service");
 let AdminModule = class AdminModule {
 };
 AdminModule = __decorate([

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class SpeakerProfileService {
@@ -26,18 +26,33 @@ export class SpeakerProfileService {
   }
 
   async getProfile(id: number) {
-    const profile = await this.prisma.speakerProfile.findUnique({
-      where: { id },
+    const speaker = await this.prisma.user.findFirst({
+      where: { 
+        id,
+        role: 'SPEAKER'
+      },
       include: {
-        user: true,
+        speakerProfile: true,
+        _count: {
+          select: {
+            speakerEvents: {
+              where: {
+                status: 'ACCEPTED',
+              },
+            },
+          },
+        },
       },
     });
 
-    if (!profile) {
-      throw new NotFoundException('Speaker profile not found');
+    if (!speaker) {
+      throw new NotFoundException('Speaker not found');
     }
 
-    return profile;
+    return {
+      ...speaker,
+      totalEvents: speaker._count.speakerEvents,
+    };
   }
 
   async getUserProfile(userId: number) {
@@ -55,30 +70,44 @@ export class SpeakerProfileService {
     return profile;
   }
 
-  async updateProfile(
-    id: number,
-    data: {
-      bio?: string;
-      expertise?: string[];
+  async updateProfile(id: number, data: {
+    bio?: string;
+    photo?: string;
+    organization?: string;
+    title?: string;
+    socialLinks?: {
+      linkedin?: string;
+      twitter?: string;
       website?: string;
-      socialLinks?: any;
-      availability?: any;
-    },
-  ) {
-    try {
-      return await this.prisma.speakerProfile.update({
-        where: { id },
-        data,
-        include: {
-          user: true,
-        },
-      });
-    } catch (error) {
-      if (error.code === 'P2025') {
-        throw new NotFoundException('Speaker profile not found');
-      }
-      throw new BadRequestException('Failed to update speaker profile: ' + error.message);
+    };
+  }) {
+    const speaker = await this.prisma.user.findFirst({
+      where: { 
+        id,
+        role: 'SPEAKER'
+      },
+    });
+
+    if (!speaker) {
+      throw new NotFoundException('Speaker not found');
     }
+
+    // Update user profile
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        bio: data.bio,
+        photo: data.photo,
+        organization: data.organization,
+        title: data.title,
+        socialLinks: data.socialLinks,
+      },
+      include: {
+        speakerProfile: true,
+      },
+    });
+
+    return updatedUser;
   }
 
   async deleteProfile(id: number) {

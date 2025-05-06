@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
-import { TaskStatus } from '.prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+
+type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 @Injectable()
 export class EventTaskService {
@@ -19,14 +20,14 @@ export class EventTaskService {
         data: {
           title: data.title,
           description: data.description,
-          status: TaskStatus.PENDING,
+          status: 'PENDING' as TaskStatus,
           dueDate: data.dueDate,
           event: { connect: { id: data.eventId } },
-          assignedTo: data.assignedTo ? { connect: { id: data.assignedTo } } : undefined,
+          assignee: data.assignedTo ? { connect: { id: data.assignedTo } } : undefined,
         },
         include: {
           event: true,
-          assignedTo: true,
+          assignee: true,
         },
       });
     } catch (error) {
@@ -39,7 +40,7 @@ export class EventTaskService {
       where: { id },
       include: {
         event: true,
-        assignedTo: true,
+        assignee: true,
       },
     });
 
@@ -57,7 +58,7 @@ export class EventTaskService {
         ...(status ? { status } : {}),
       },
       include: {
-        assignedTo: true,
+        assignee: true,
       },
     });
   }
@@ -65,7 +66,7 @@ export class EventTaskService {
   async getUserTasks(userId: number, status?: TaskStatus) {
     return this.prisma.eventTask.findMany({
       where: {
-        assignedToId: userId,
+        assigneeId: userId,
         ...(status ? { status } : {}),
       },
       include: {
@@ -92,11 +93,11 @@ export class EventTaskService {
           description: data.description,
           dueDate: data.dueDate,
           status: data.status,
-          assignedTo: data.assignedTo ? { connect: { id: data.assignedTo } } : undefined,
+          assignee: data.assignedTo ? { connect: { id: data.assignedTo } } : undefined,
         },
         include: {
           event: true,
-          assignedTo: true,
+          assignee: true,
         },
       });
     } catch (error) {
@@ -139,7 +140,7 @@ export class EventTaskService {
       stats.byStatus[task.status] = (stats.byStatus[task.status] || 0) + 1;
 
       // Count overdue tasks
-      if (task.dueDate && task.dueDate < now && task.status !== TaskStatus.COMPLETED) {
+      if (task.dueDate && task.dueDate < now && task.status !== 'COMPLETED') {
         stats.overdue++;
       }
     });

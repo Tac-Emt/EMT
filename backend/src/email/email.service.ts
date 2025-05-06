@@ -1,7 +1,13 @@
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
-import { Event } from '.prisma/client';
+
+interface Event {
+  id: number;
+  title: string;
+  date: Date;
+  location: string;
+}
 
 interface MailOptions {
   to: string;

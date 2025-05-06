@@ -17,11 +17,21 @@ export declare class FeedController {
             title: string;
             description: string;
             date: Date;
-            status: import(".prisma/client").$Enums.EventStatus;
             location: string;
+            capacity: number;
+            status: import(".prisma/client").$Enums.EventStatus;
+            agenda: import("@prisma/client/runtime/library").JsonValue;
+            resources: import("@prisma/client/runtime/library").JsonValue;
             category: import(".prisma/client").$Enums.EventCategory;
             type: import(".prisma/client").$Enums.EventType;
             eventTag: string;
+            registrationLink: string;
+            seriesId: number;
+            checkedIn: boolean;
+            checkedInAt: Date;
+            slug: string;
+            pageContent: import("@prisma/client/runtime/library").JsonValue;
+            pageSettings: import("@prisma/client/runtime/library").JsonValue;
         }[];
     }>;
     getFilterOptions(): Promise<{

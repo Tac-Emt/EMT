@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EventTaskController } from './event-task.controller';
 import { EventTaskService } from './event-task.service';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
   controllers: [EventTaskController],

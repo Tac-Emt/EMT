@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class RegistrationTypeService {
@@ -8,95 +8,98 @@ export class RegistrationTypeService {
   async createRegistrationType(data: {
     eventId: number;
     name: string;
-    description?: string;
+    price?: number;
+    capacity?: number;
+    startDate: Date;
+    endDate: Date;
+  }) {
+    return this.prisma.registrationType.create({
+      data: {
+        name: data.name,
+        price: data.price,
+        capacity: data.capacity,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        event: { connect: { id: data.eventId } },
+      },
+    });
+  }
+
+  async getRegistrationTypes(eventId: number) {
+    return this.prisma.registrationType.findMany({
+      where: { eventId },
+    });
+  }
+
+  async getRegistrationType(id: number) {
+    const type = await this.prisma.registrationType.findUnique({
+      where: { id },
+      include: {
+        event: true,
+      },
+    });
+
+    if (!type) {
+      throw new NotFoundException('Registration type not found');
+    }
+
+    return type;
+  }
+
+  async updateRegistrationType(id: number, data: {
+    name?: string;
     price?: number;
     capacity?: number;
     startDate?: Date;
     endDate?: Date;
   }) {
-    try {
-      return await this.prisma.registrationType.create({
-        data,
-        include: {
-          event: true,
-          registrations: true,
-        },
-      });
-    } catch (error) {
-      throw new BadRequestException('Failed to create registration type: ' + error.message);
+    const type = await this.prisma.registrationType.findUnique({
+      where: { id },
+    });
+
+    if (!type) {
+      throw new NotFoundException('Registration type not found');
     }
+
+    return this.prisma.registrationType.update({
+      where: { id },
+      data,
+    });
   }
 
-  async getRegistrationType(id: number) {
+  async deleteRegistrationType(id: number) {
+    const type = await this.prisma.registrationType.findUnique({
+      where: { id },
+    });
+
+    if (!type) {
+      throw new NotFoundException('Registration type not found');
+    }
+
+    await this.prisma.registrationType.delete({
+      where: { id },
+    });
+
+    return { message: 'Registration type deleted successfully' };
+  }
+
+  async checkAvailability(id: number) {
     const registrationType = await this.prisma.registrationType.findUnique({
       where: { id },
       include: {
-        event: true,
-        registrations: true,
-      },
+        _count: {
+          select: {
+            registrations: true
+          }
+        }
+      }
     });
 
     if (!registrationType) {
       throw new NotFoundException('Registration type not found');
     }
 
-    return registrationType;
-  }
-
-  async getEventRegistrationTypes(eventId: number) {
-    return this.prisma.registrationType.findMany({
-      where: { eventId },
-      include: {
-        registrations: true,
-      },
-    });
-  }
-
-  async updateRegistrationType(
-    id: number,
-    data: {
-      name?: string;
-      description?: string;
-      price?: number;
-      capacity?: number;
-      startDate?: Date;
-      endDate?: Date;
-    },
-  ) {
-    try {
-      return await this.prisma.registrationType.update({
-        where: { id },
-        data,
-        include: {
-          event: true,
-          registrations: true,
-        },
-      });
-    } catch (error) {
-      if (error.code === 'P2025') {
-        throw new NotFoundException('Registration type not found');
-      }
-      throw new BadRequestException('Failed to update registration type: ' + error.message);
-    }
-  }
-
-  async deleteRegistrationType(id: number) {
-    try {
-      await this.prisma.registrationType.delete({
-        where: { id },
-      });
-      return { message: 'Registration type deleted successfully' };
-    } catch (error) {
-      if (error.code === 'P2025') {
-        throw new NotFoundException('Registration type not found');
-      }
-      throw new BadRequestException('Failed to delete registration type: ' + error.message);
-    }
-  }
-
-  async checkAvailability(id: number) {
-    const registrationType = await this.getRegistrationType(id);
-    const registeredCount = registrationType.registrations.length;
+    const registeredCount = registrationType._count.registrations;
     
     return {
       available: registrationType.capacity ? registeredCount < registrationType.capacity : true,

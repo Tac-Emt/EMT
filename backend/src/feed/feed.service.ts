@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { EventStatus, EventCategory, EventType, Role } from '@prisma/client';
 
 @Injectable()

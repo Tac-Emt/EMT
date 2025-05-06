@@ -11,11 +11,11 @@ import { EmailModule } from './email/email.module';
 import { EventModule } from './event/event.module';
 import { RegistrationModule } from './registration/registration.module';
 import { SpeakerModule } from './speaker/speaker.module';
-import { ResourceModule } from './resource/resource.module';
+
 import { EventTaskModule } from './event-task/event-task.module';
 import { CheckInModule } from './check-in/check-in.module';
 import { FileUploadModule } from './file-upload/file-upload.module';
-import { PrismaService } from './prisma.service';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -24,6 +24,7 @@ import { PrismaService } from './prisma.service';
       rootPath: join(__dirname, '..', 'Uploads'),
       serveRoot: '/uploads',
     }),
+    PrismaModule,
     AdminModule,
     UserModule,
     AuthModule,
@@ -33,11 +34,9 @@ import { PrismaService } from './prisma.service';
     EventModule,
     RegistrationModule,
     SpeakerModule,
-    ResourceModule,
     EventTaskModule,
     CheckInModule,
     FileUploadModule,
   ],
-  providers: [PrismaService],
 })
 export class AppModule {}

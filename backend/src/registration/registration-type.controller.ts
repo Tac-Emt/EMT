@@ -1,55 +1,47 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { RegistrationTypeService } from './registration-type.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles, Role } from '../auth/decorators/roles.decorator';
 
 @Controller('registration-types')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class RegistrationTypeController {
-  constructor(private readonly registrationTypeService: RegistrationTypeService) {}
+  constructor(private registrationTypeService: RegistrationTypeService) {}
 
   @Post()
-  @Roles(Role.ADMIN, Role.ORGANIZER)
+  @Roles(Role.ORGANIZER, Role.ADMIN)
   async createRegistrationType(
-    @Body()
-    data: {
+    @Body() data: {
       eventId: number;
       name: string;
-      description?: string;
       price?: number;
       capacity?: number;
-      startDate?: Date;
-      endDate?: Date;
+      startDate: Date;
+      endDate: Date;
     },
   ) {
     return this.registrationTypeService.createRegistrationType(data);
   }
 
-  @Get()
-  async getAllRegistrationTypes() {
-    return this.registrationTypeService.getEventRegistrationTypes(0);
+  @Get('event/:eventId')
+  @Roles(Role.USER, Role.ORGANIZER, Role.ADMIN)
+  async getRegistrationTypes(@Param('eventId') eventId: string) {
+    return this.registrationTypeService.getRegistrationTypes(+eventId);
   }
 
   @Get(':id')
+  @Roles(Role.USER, Role.ORGANIZER, Role.ADMIN)
   async getRegistrationType(@Param('id') id: string) {
     return this.registrationTypeService.getRegistrationType(+id);
   }
 
-  @Get('event/:eventId')
-  async getEventRegistrationTypes(@Param('eventId') eventId: string) {
-    return this.registrationTypeService.getEventRegistrationTypes(+eventId);
-  }
-
   @Put(':id')
-  @Roles(Role.ADMIN, Role.ORGANIZER)
+  @Roles(Role.ORGANIZER, Role.ADMIN)
   async updateRegistrationType(
     @Param('id') id: string,
-    @Body()
-    data: {
+    @Body() data: {
       name?: string;
-      description?: string;
       price?: number;
       capacity?: number;
       startDate?: Date;
@@ -60,7 +52,7 @@ export class RegistrationTypeController {
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN, Role.ORGANIZER)
+  @Roles(Role.ORGANIZER, Role.ADMIN)
   async deleteRegistrationType(@Param('id') id: string) {
     return this.registrationTypeService.deleteRegistrationType(+id);
   }

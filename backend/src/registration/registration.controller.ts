@@ -1,63 +1,70 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { RegistrationService } from './registration.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { Role, RegistrationStatus } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../auth/roles';
+import { Prisma } from '@prisma/client';
+
+type RegistrationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'WAITLISTED';
 
 @Controller('registrations')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class RegistrationController {
-  constructor(private readonly registrationService: RegistrationService) {}
+  constructor(private registrationService: RegistrationService) {}
 
   @Post()
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.ORGANIZER, Role.ADMIN)
   async createRegistration(
-    @Body()
-    data: {
+    @Body() data: {
       userId: number;
       eventId: number;
       registrationTypeId: number;
-      status?: RegistrationStatus;
-      additionalInfo?: any;
+      status: RegistrationStatus;
     },
   ) {
     return this.registrationService.createRegistration(data);
   }
 
+  @Get()
+  @Roles(Role.ORGANIZER, Role.ADMIN)
+  async getRegistrations(
+    @Body() filters: {
+      userId?: number;
+      eventId?: number;
+      status?: RegistrationStatus;
+    },
+  ) {
+    return this.registrationService.getRegistrations(filters);
+  }
+
   @Get(':id')
+  @Roles(Role.USER, Role.ORGANIZER, Role.ADMIN)
   async getRegistration(@Param('id') id: string) {
     return this.registrationService.getRegistration(+id);
   }
 
-  @Get('user/:userId')
-  async getUserRegistrations(@Param('userId') userId: string) {
-    return this.registrationService.getUserRegistrations(+userId);
-  }
-
-  @Get('event/:eventId')
-  async getEventRegistrations(@Param('eventId') eventId: string) {
-    return this.registrationService.getEventRegistrations(+eventId);
-  }
-
-  @Put(':id/status')
-  @Roles(Role.ADMIN, Role.ORGANIZER)
-  async updateRegistrationStatus(
+  @Put(':id')
+  @Roles(Role.ORGANIZER, Role.ADMIN)
+  async updateRegistration(
     @Param('id') id: string,
-    @Body() data: { status: RegistrationStatus; additionalInfo?: any },
+    @Body() data: {
+      status?: RegistrationStatus;
+      registrationTypeId?: number;
+    },
   ) {
-    return this.registrationService.updateRegistrationStatus(+id, data.status, data.additionalInfo);
+    return this.registrationService.updateRegistration(+id, data);
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN, Role.ORGANIZER)
+  @Roles(Role.ORGANIZER, Role.ADMIN)
   async deleteRegistration(@Param('id') id: string) {
     return this.registrationService.deleteRegistration(+id);
   }
 
-  @Get('event/:eventId/stats')
-  @Roles(Role.ADMIN, Role.ORGANIZER)
-  async getRegistrationStats(@Param('eventId') eventId: string) {
-    return this.registrationService.getRegistrationStats(+eventId);
+  @Get('stats/:eventId')
+  @Roles(Role.ORGANIZER, Role.ADMIN)
+  async getEventRegistrationStats(@Param('eventId') eventId: string) {
+    return this.registrationService.getEventRegistrationStats(+eventId);
   }
 } 

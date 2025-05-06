@@ -1,4 +1,4 @@
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 export declare class SchedulerService {
     private prisma;

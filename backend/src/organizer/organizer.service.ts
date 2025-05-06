@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import { EventStatus, EventCategory, EventType } from '.prisma/client';
 import * as fs from 'fs/promises';
@@ -60,6 +60,7 @@ export class EventService {
           eventTag: data.eventTag,
           registrationLink: data.registrationLink,
           slug,
+          capacity: 0,
           pageContent: data.pageContent,
           pageSettings: data.pageSettings,
           organizers: {
@@ -140,7 +141,7 @@ export class EventService {
       where: { id: eventId },
       include: { organizers: { include: { organizer: { select: { id: true, email: true, name: true } } } } },
     });
-    if (!event || event.status !== 'DRAFT') {
+    if (!event || event.status !== EventStatus.DRAFT) {
       throw new NotFoundException('Event not found or not in DRAFT status');
     }
 

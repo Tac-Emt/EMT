@@ -1,19 +1,167 @@
-import { PrismaService } from '../prisma.service';
-import { EmailService } from '../email/email.service';
-import { EventStatus, EventCategory, EventType } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { FileUploadService } from '../file-upload/file-upload.service';
+import { Prisma } from '@prisma/client';
+type EventStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
+type EventCategory = 'CS' | 'RAS' | 'IAS' | 'WIE';
+type EventType = 'CONGRESS' | 'CONFERENCE' | 'HACKATHON' | 'NORMAL' | 'ONLINE';
 export declare class EventService {
     private prisma;
-    private emailService;
-    constructor(prisma: PrismaService, emailService: EmailService);
-    createEvent(title: string, description: string, date: string, organizerId: number, category: EventCategory, type: EventType, status?: EventStatus, location?: string, image?: string, collaboratorIds?: number[]): Promise<{
+    private fileUploadService;
+    constructor(prisma: PrismaService, fileUploadService: FileUploadService);
+    create(data: any): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        date: Date;
+        location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
+        image: string;
+        agenda: Prisma.JsonValue;
+        resources: Prisma.JsonValue;
+        category: import(".prisma/client").$Enums.EventCategory;
+        type: import(".prisma/client").$Enums.EventType;
+        eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: Prisma.JsonValue;
+        pageSettings: Prisma.JsonValue;
+    }>;
+    findAll(): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        date: Date;
+        location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
+        image: string;
+        agenda: Prisma.JsonValue;
+        resources: Prisma.JsonValue;
+        category: import(".prisma/client").$Enums.EventCategory;
+        type: import(".prisma/client").$Enums.EventType;
+        eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: Prisma.JsonValue;
+        pageSettings: Prisma.JsonValue;
+    }[]>;
+    findOne(id: number): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        date: Date;
+        location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
+        image: string;
+        agenda: Prisma.JsonValue;
+        resources: Prisma.JsonValue;
+        category: import(".prisma/client").$Enums.EventCategory;
+        type: import(".prisma/client").$Enums.EventType;
+        eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: Prisma.JsonValue;
+        pageSettings: Prisma.JsonValue;
+    }>;
+    update(id: number, data: any): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        date: Date;
+        location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
+        image: string;
+        agenda: Prisma.JsonValue;
+        resources: Prisma.JsonValue;
+        category: import(".prisma/client").$Enums.EventCategory;
+        type: import(".prisma/client").$Enums.EventType;
+        eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: Prisma.JsonValue;
+        pageSettings: Prisma.JsonValue;
+    }>;
+    remove(id: number): Promise<{
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        date: Date;
+        location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
+        image: string;
+        agenda: Prisma.JsonValue;
+        resources: Prisma.JsonValue;
+        category: import(".prisma/client").$Enums.EventCategory;
+        type: import(".prisma/client").$Enums.EventType;
+        eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: Prisma.JsonValue;
+        pageSettings: Prisma.JsonValue;
+    }>;
+    createEvent(data: {
+        title: string;
+        description: string;
+        date: Date;
+        location: string;
+        image?: string;
+        category: EventCategory;
+        type: EventType;
+        eventTag: string;
+        organizerId: number;
+    }): Promise<{
         organizers: ({
             organizer: {
                 id: number;
                 email: string;
+                password: string;
                 name: string;
+                role: import(".prisma/client").$Enums.Role;
+                isEmailVerified: boolean;
+                otp: string;
+                otpExpires: Date;
+                passwordResetAt: Date;
+                createdAt: Date;
+                updatedAt: Date;
+                bio: string;
+                photo: string;
+                organization: string;
+                title: string;
+                socialLinks: Prisma.JsonValue;
             };
         } & {
+            id: number;
             createdAt: Date;
+            updatedAt: Date;
             isHost: boolean;
             pendingConfirmation: boolean;
             expiresAt: Date;
@@ -27,65 +175,94 @@ export declare class EventService {
         title: string;
         description: string;
         date: Date;
-        status: import(".prisma/client").$Enums.EventStatus;
         location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
         image: string;
+        agenda: Prisma.JsonValue;
+        resources: Prisma.JsonValue;
         category: import(".prisma/client").$Enums.EventCategory;
         type: import(".prisma/client").$Enums.EventType;
         eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: Prisma.JsonValue;
+        pageSettings: Prisma.JsonValue;
     }>;
-    confirmEventParticipation(eventId: number, organizerId: number, confirm: boolean): Promise<{
-        message: string;
-    }>;
-    getOrganizerEvents(organizerId: number, page: number, limit: number): Promise<{
-        events: ({
-            organizers: ({
-                organizer: {
-                    id: number;
-                    name: string;
-                };
-            } & {
+    getEvents(filters: {
+        organizerId?: number;
+        startDate?: Date;
+        endDate?: Date;
+    }): Promise<({
+        organizers: ({
+            organizer: {
+                id: number;
+                email: string;
+                password: string;
+                name: string;
+                role: import(".prisma/client").$Enums.Role;
+                isEmailVerified: boolean;
+                otp: string;
+                otpExpires: Date;
+                passwordResetAt: Date;
                 createdAt: Date;
-                isHost: boolean;
-                pendingConfirmation: boolean;
-                expiresAt: Date;
-                organizerId: number;
-                eventId: number;
-            })[];
+                updatedAt: Date;
+                bio: string;
+                photo: string;
+                organization: string;
+                title: string;
+                socialLinks: Prisma.JsonValue;
+            };
         } & {
+            id: number;
+            createdAt: Date;
+            updatedAt: Date;
+            isHost: boolean;
+            pendingConfirmation: boolean;
+            expiresAt: Date;
+            organizerId: number;
+            eventId: number;
+        })[];
+        speakers: ({
+            speaker: {
+                id: number;
+                email: string;
+                password: string;
+                name: string;
+                role: import(".prisma/client").$Enums.Role;
+                isEmailVerified: boolean;
+                otp: string;
+                otpExpires: Date;
+                passwordResetAt: Date;
+                createdAt: Date;
+                updatedAt: Date;
+                bio: string;
+                photo: string;
+                organization: string;
+                title: string;
+                socialLinks: Prisma.JsonValue;
+            };
+        } & {
+            id: number;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.SpeakerStatus;
+            eventId: number;
+            speakerId: number;
+        })[];
+        eventResources: {
             id: number;
             createdAt: Date;
             updatedAt: Date;
             title: string;
             description: string;
-            date: Date;
-            status: import(".prisma/client").$Enums.EventStatus;
-            location: string;
-            image: string;
-            category: import(".prisma/client").$Enums.EventCategory;
-            type: import(".prisma/client").$Enums.EventType;
-            eventTag: string;
-        })[];
-        total: number;
-        statusBreakdown: (number | import(".prisma/client").$Enums.EventStatus)[][];
-        categoryBreakdown: (number | import(".prisma/client").$Enums.EventCategory)[][];
-        typeBreakdown: (number | import(".prisma/client").$Enums.EventType)[][];
-        upcomingEvents: number;
-    }>;
-    getEventById(id: number): Promise<{
-        organizers: ({
-            organizer: {
-                id: number;
-                name: string;
-            };
-        } & {
-            createdAt: Date;
-            isHost: boolean;
-            pendingConfirmation: boolean;
-            expiresAt: Date;
-            organizerId: number;
+            type: string;
             eventId: number;
-        })[];
+            url: string;
+        }[];
     } & {
         id: number;
         createdAt: Date;
@@ -93,30 +270,148 @@ export declare class EventService {
         title: string;
         description: string;
         date: Date;
-        status: import(".prisma/client").$Enums.EventStatus;
         location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
         image: string;
+        agenda: Prisma.JsonValue;
+        resources: Prisma.JsonValue;
         category: import(".prisma/client").$Enums.EventCategory;
         type: import(".prisma/client").$Enums.EventType;
         eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: Prisma.JsonValue;
+        pageSettings: Prisma.JsonValue;
+    })[]>;
+    getEventById(id: number): Promise<{
+        organizers: ({
+            organizer: {
+                id: number;
+                email: string;
+                password: string;
+                name: string;
+                role: import(".prisma/client").$Enums.Role;
+                isEmailVerified: boolean;
+                otp: string;
+                otpExpires: Date;
+                passwordResetAt: Date;
+                createdAt: Date;
+                updatedAt: Date;
+                bio: string;
+                photo: string;
+                organization: string;
+                title: string;
+                socialLinks: Prisma.JsonValue;
+            };
+        } & {
+            id: number;
+            createdAt: Date;
+            updatedAt: Date;
+            isHost: boolean;
+            pendingConfirmation: boolean;
+            expiresAt: Date;
+            organizerId: number;
+            eventId: number;
+        })[];
+        speakers: ({
+            speaker: {
+                id: number;
+                email: string;
+                password: string;
+                name: string;
+                role: import(".prisma/client").$Enums.Role;
+                isEmailVerified: boolean;
+                otp: string;
+                otpExpires: Date;
+                passwordResetAt: Date;
+                createdAt: Date;
+                updatedAt: Date;
+                bio: string;
+                photo: string;
+                organization: string;
+                title: string;
+                socialLinks: Prisma.JsonValue;
+            };
+        } & {
+            id: number;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.SpeakerStatus;
+            eventId: number;
+            speakerId: number;
+        })[];
+        eventResources: {
+            id: number;
+            createdAt: Date;
+            updatedAt: Date;
+            title: string;
+            description: string;
+            type: string;
+            eventId: number;
+            url: string;
+        }[];
+    } & {
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        date: Date;
+        location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
+        image: string;
+        agenda: Prisma.JsonValue;
+        resources: Prisma.JsonValue;
+        category: import(".prisma/client").$Enums.EventCategory;
+        type: import(".prisma/client").$Enums.EventType;
+        eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: Prisma.JsonValue;
+        pageSettings: Prisma.JsonValue;
     }>;
-    updateEvent(id: number, organizerId: number, data: {
+    updateEvent(id: number, data: {
         title?: string;
         description?: string;
-        date?: string;
+        date?: Date;
         status?: EventStatus;
         location?: string;
         image?: string;
         category?: EventCategory;
         type?: EventType;
+        eventTag?: string;
     }): Promise<{
         organizers: ({
             organizer: {
                 id: number;
+                email: string;
+                password: string;
                 name: string;
+                role: import(".prisma/client").$Enums.Role;
+                isEmailVerified: boolean;
+                otp: string;
+                otpExpires: Date;
+                passwordResetAt: Date;
+                createdAt: Date;
+                updatedAt: Date;
+                bio: string;
+                photo: string;
+                organization: string;
+                title: string;
+                socialLinks: Prisma.JsonValue;
             };
         } & {
+            id: number;
             createdAt: Date;
+            updatedAt: Date;
             isHost: boolean;
             pendingConfirmation: boolean;
             expiresAt: Date;
@@ -130,14 +425,25 @@ export declare class EventService {
         title: string;
         description: string;
         date: Date;
-        status: import(".prisma/client").$Enums.EventStatus;
         location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
         image: string;
+        agenda: Prisma.JsonValue;
+        resources: Prisma.JsonValue;
         category: import(".prisma/client").$Enums.EventCategory;
         type: import(".prisma/client").$Enums.EventType;
         eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: Prisma.JsonValue;
+        pageSettings: Prisma.JsonValue;
     }>;
-    deleteEvent(id: number, organizerId: number): Promise<{
+    deleteEvent(id: number): Promise<{
         message: string;
     }>;
 }
+export {};

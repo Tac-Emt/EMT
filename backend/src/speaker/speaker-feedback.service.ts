@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class SpeakerFeedbackService {
@@ -12,31 +12,20 @@ export class SpeakerFeedbackService {
     rating: number;
     comment?: string;
   }) {
-    try {
-      // Check if user has already provided feedback
-      const existingFeedback = await this.prisma.speakerFeedback.findFirst({
-        where: {
-          eventId: data.eventId,
-          speakerId: data.speakerId,
-          userId: data.userId,
-        },
-      });
-
-      if (existingFeedback) {
-        throw new BadRequestException('User has already provided feedback for this speaker');
-      }
-
-      return await this.prisma.speakerFeedback.create({
-        data,
-        include: {
-          event: true,
-          speaker: true,
-          user: true,
-        },
-      });
-    } catch (error) {
-      throw new BadRequestException('Failed to create feedback: ' + error.message);
-    }
+    return this.prisma.speakerFeedback.create({
+      data: {
+        rating: data.rating,
+        comment: data.comment,
+        event: { connect: { id: data.eventId } },
+        speaker: { connect: { id: data.speakerId } },
+        user: { connect: { id: data.userId } },
+      },
+      include: {
+        event: true,
+        speaker: true,
+        user: true,
+      },
+    });
   }
 
   async getFeedback(id: number) {
@@ -56,17 +45,7 @@ export class SpeakerFeedbackService {
     return feedback;
   }
 
-  async getEventFeedback(eventId: number) {
-    return this.prisma.speakerFeedback.findMany({
-      where: { eventId },
-      include: {
-        speaker: true,
-        user: true,
-      },
-    });
-  }
-
-  async getSpeakerFeedback(speakerId: number) {
+  async getSpeakerFeedbacks(speakerId: number) {
     return this.prisma.speakerFeedback.findMany({
       where: { speakerId },
       include: {
@@ -76,69 +55,83 @@ export class SpeakerFeedbackService {
     });
   }
 
-  async updateFeedback(
-    id: number,
-    data: {
-      rating?: number;
-      comment?: string;
-    },
-  ) {
-    try {
-      return await this.prisma.speakerFeedback.update({
-        where: { id },
-        data,
-        include: {
-          event: true,
-          speaker: true,
-          user: true,
-        },
-      });
-    } catch (error) {
-      if (error.code === 'P2025') {
-        throw new NotFoundException('Feedback not found');
-      }
-      throw new BadRequestException('Failed to update feedback: ' + error.message);
+  async getEventFeedbacks(eventId: number) {
+    return this.prisma.speakerFeedback.findMany({
+      where: { eventId },
+      include: {
+        speaker: true,
+        user: true,
+      },
+    });
+  }
+
+  async updateFeedback(id: number, data: {
+    rating?: number;
+    comment?: string;
+  }) {
+    const feedback = await this.prisma.speakerFeedback.findUnique({
+      where: { id },
+    });
+
+    if (!feedback) {
+      throw new NotFoundException('Feedback not found');
     }
+
+    return this.prisma.speakerFeedback.update({
+      where: { id },
+      data,
+      include: {
+        event: true,
+        speaker: true,
+        user: true,
+      },
+    });
   }
 
   async deleteFeedback(id: number) {
-    try {
-      await this.prisma.speakerFeedback.delete({
-        where: { id },
-      });
-      return { message: 'Feedback deleted successfully' };
-    } catch (error) {
-      if (error.code === 'P2025') {
-        throw new NotFoundException('Feedback not found');
-      }
-      throw new BadRequestException('Failed to delete feedback: ' + error.message);
+    const feedback = await this.prisma.speakerFeedback.findUnique({
+      where: { id },
+    });
+
+    if (!feedback) {
+      throw new NotFoundException('Feedback not found');
     }
+
+    await this.prisma.speakerFeedback.delete({
+      where: { id },
+    });
+
+    return { message: 'Feedback deleted successfully' };
   }
 
-  async getFeedbackStats(speakerId: number) {
-    const feedback = await this.prisma.speakerFeedback.findMany({
+  async getSpeakerStats(speakerId: number) {
+    const feedbacks = await this.prisma.speakerFeedback.findMany({
       where: { speakerId },
     });
 
-    const stats = {
-      total: feedback.length,
-      averageRating:
-        feedback.length > 0
-          ? feedback.reduce((acc, curr) => acc + curr.rating, 0) / feedback.length
-          : 0,
-      ratingDistribution: {
-        1: 0,
-        2: 0,
-        3: 0,
-        4: 0,
-        5: 0,
-      },
+    const totalRating = feedbacks.reduce((sum, feedback) => sum + feedback.rating, 0);
+    const averageRating = feedbacks.length > 0 ? totalRating / feedbacks.length : 0;
+
+    return {
+      totalFeedbacks: feedbacks.length,
+      averageRating,
+      ratingDistribution: this.getRatingDistribution(feedbacks),
+    };
+  }
+
+  private getRatingDistribution(feedbacks: { rating: number }[]) {
+    const distribution = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
     };
 
-    feedback.forEach((f) => {
-      stats.ratingDistribution[f.rating]++;
+    feedbacks.forEach((feedback) => {
+      distribution[feedback.rating]++;
     });
 
-    return stats;
+    return distribution;
   }
 } 

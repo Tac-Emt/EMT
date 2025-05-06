@@ -22,11 +22,31 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { EventService } from './organizer.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OrganizerGuard } from '../auth/guards/organizer.guard';
-import { EventStatus, EventCategory, EventType } from '.prisma/client';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+
+enum EventStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  CANCELLED = 'CANCELLED'
+}
+
+enum EventCategory {
+  CS = 'CS',
+  RAS = 'RAS',
+  IAS = 'IAS',
+  WIE = 'WIE'
+}
+
+enum EventType {
+  CONGRESS = 'CONGRESS',
+  CONFERENCE = 'CONFERENCE',
+  HACKATHON = 'HACKATHON',
+  NORMAL = 'NORMAL',
+  ONLINE = 'ONLINE'
+}
 
 @Controller('organizer/events')
 @UseGuards(JwtAuthGuard, RolesGuard)

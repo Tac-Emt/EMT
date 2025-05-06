@@ -20,7 +20,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
-import { EventStatus, EventCategory, EventType, Role } from '.prisma/client';
+import { EventStatus, EventCategory, EventType } from '@prisma/client';
+import { Role } from '../auth/decorators/roles.decorator';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 
@@ -79,7 +80,10 @@ export class AdminController {
         }
       }
       console.log('ℹ️ [AdminController] Updating user:', { id: userId, data });
-      const updatedUser = await this.adminService.updateUser(userId, data);
+      const updatedUser = await this.adminService.updateUser(userId, {
+        ...data,
+        role: data.role as Role | undefined
+      });
       return { message: 'User updated successfully', data: updatedUser };
     } catch (error) {
       console.error('🚨 [AdminController] Error updating user:', error.message);

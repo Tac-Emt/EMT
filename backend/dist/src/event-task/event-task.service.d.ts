@@ -1,0 +1,256 @@
+import { PrismaService } from '../prisma/prisma.service';
+type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export declare class EventTaskService {
+    private prisma;
+    constructor(prisma: PrismaService);
+    createTask(data: {
+        eventId: number;
+        title: string;
+        description?: string;
+        assignedTo?: number;
+        dueDate?: Date;
+        priority?: number;
+    }): Promise<{
+        event: {
+            id: number;
+            createdAt: Date;
+            updatedAt: Date;
+            title: string;
+            description: string;
+            date: Date;
+            location: string;
+            capacity: number;
+            status: import(".prisma/client").$Enums.EventStatus;
+            image: string;
+            agenda: import("@prisma/client/runtime/library").JsonValue;
+            resources: import("@prisma/client/runtime/library").JsonValue;
+            category: import(".prisma/client").$Enums.EventCategory;
+            type: import(".prisma/client").$Enums.EventType;
+            eventTag: string;
+            registrationLink: string;
+            seriesId: number;
+            checkedIn: boolean;
+            checkedInAt: Date;
+            slug: string;
+            pageContent: import("@prisma/client/runtime/library").JsonValue;
+            pageSettings: import("@prisma/client/runtime/library").JsonValue;
+        };
+        assignee: {
+            id: number;
+            email: string;
+            password: string;
+            name: string;
+            role: import(".prisma/client").$Enums.Role;
+            isEmailVerified: boolean;
+            otp: string;
+            otpExpires: Date;
+            passwordResetAt: Date;
+            createdAt: Date;
+            updatedAt: Date;
+            bio: string;
+            photo: string;
+            organization: string;
+            title: string;
+            socialLinks: import("@prisma/client/runtime/library").JsonValue;
+        };
+    } & {
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        eventId: number;
+        dueDate: Date;
+        assigneeId: number;
+    }>;
+    getTask(id: number): Promise<{
+        event: {
+            id: number;
+            createdAt: Date;
+            updatedAt: Date;
+            title: string;
+            description: string;
+            date: Date;
+            location: string;
+            capacity: number;
+            status: import(".prisma/client").$Enums.EventStatus;
+            image: string;
+            agenda: import("@prisma/client/runtime/library").JsonValue;
+            resources: import("@prisma/client/runtime/library").JsonValue;
+            category: import(".prisma/client").$Enums.EventCategory;
+            type: import(".prisma/client").$Enums.EventType;
+            eventTag: string;
+            registrationLink: string;
+            seriesId: number;
+            checkedIn: boolean;
+            checkedInAt: Date;
+            slug: string;
+            pageContent: import("@prisma/client/runtime/library").JsonValue;
+            pageSettings: import("@prisma/client/runtime/library").JsonValue;
+        };
+        assignee: {
+            id: number;
+            email: string;
+            password: string;
+            name: string;
+            role: import(".prisma/client").$Enums.Role;
+            isEmailVerified: boolean;
+            otp: string;
+            otpExpires: Date;
+            passwordResetAt: Date;
+            createdAt: Date;
+            updatedAt: Date;
+            bio: string;
+            photo: string;
+            organization: string;
+            title: string;
+            socialLinks: import("@prisma/client/runtime/library").JsonValue;
+        };
+    } & {
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        eventId: number;
+        dueDate: Date;
+        assigneeId: number;
+    }>;
+    getEventTasks(eventId: number, status?: TaskStatus): Promise<({
+        assignee: {
+            id: number;
+            email: string;
+            password: string;
+            name: string;
+            role: import(".prisma/client").$Enums.Role;
+            isEmailVerified: boolean;
+            otp: string;
+            otpExpires: Date;
+            passwordResetAt: Date;
+            createdAt: Date;
+            updatedAt: Date;
+            bio: string;
+            photo: string;
+            organization: string;
+            title: string;
+            socialLinks: import("@prisma/client/runtime/library").JsonValue;
+        };
+    } & {
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        eventId: number;
+        dueDate: Date;
+        assigneeId: number;
+    })[]>;
+    getUserTasks(userId: number, status?: TaskStatus): Promise<({
+        event: {
+            id: number;
+            createdAt: Date;
+            updatedAt: Date;
+            title: string;
+            description: string;
+            date: Date;
+            location: string;
+            capacity: number;
+            status: import(".prisma/client").$Enums.EventStatus;
+            image: string;
+            agenda: import("@prisma/client/runtime/library").JsonValue;
+            resources: import("@prisma/client/runtime/library").JsonValue;
+            category: import(".prisma/client").$Enums.EventCategory;
+            type: import(".prisma/client").$Enums.EventType;
+            eventTag: string;
+            registrationLink: string;
+            seriesId: number;
+            checkedIn: boolean;
+            checkedInAt: Date;
+            slug: string;
+            pageContent: import("@prisma/client/runtime/library").JsonValue;
+            pageSettings: import("@prisma/client/runtime/library").JsonValue;
+        };
+    } & {
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        eventId: number;
+        dueDate: Date;
+        assigneeId: number;
+    })[]>;
+    updateTask(id: number, data: {
+        title?: string;
+        description?: string;
+        assignedTo?: number;
+        dueDate?: Date;
+        status?: TaskStatus;
+    }): Promise<{
+        event: {
+            id: number;
+            createdAt: Date;
+            updatedAt: Date;
+            title: string;
+            description: string;
+            date: Date;
+            location: string;
+            capacity: number;
+            status: import(".prisma/client").$Enums.EventStatus;
+            image: string;
+            agenda: import("@prisma/client/runtime/library").JsonValue;
+            resources: import("@prisma/client/runtime/library").JsonValue;
+            category: import(".prisma/client").$Enums.EventCategory;
+            type: import(".prisma/client").$Enums.EventType;
+            eventTag: string;
+            registrationLink: string;
+            seriesId: number;
+            checkedIn: boolean;
+            checkedInAt: Date;
+            slug: string;
+            pageContent: import("@prisma/client/runtime/library").JsonValue;
+            pageSettings: import("@prisma/client/runtime/library").JsonValue;
+        };
+        assignee: {
+            id: number;
+            email: string;
+            password: string;
+            name: string;
+            role: import(".prisma/client").$Enums.Role;
+            isEmailVerified: boolean;
+            otp: string;
+            otpExpires: Date;
+            passwordResetAt: Date;
+            createdAt: Date;
+            updatedAt: Date;
+            bio: string;
+            photo: string;
+            organization: string;
+            title: string;
+            socialLinks: import("@prisma/client/runtime/library").JsonValue;
+        };
+    } & {
+        id: number;
+        createdAt: Date;
+        updatedAt: Date;
+        title: string;
+        description: string;
+        status: import(".prisma/client").$Enums.TaskStatus;
+        eventId: number;
+        dueDate: Date;
+        assigneeId: number;
+    }>;
+    deleteTask(id: number): Promise<{
+        message: string;
+    }>;
+    getTaskStats(eventId: number): Promise<{
+        total: number;
+        byStatus: {};
+        overdue: number;
+    }>;
+}
+export {};

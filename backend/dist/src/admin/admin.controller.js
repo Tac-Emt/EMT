@@ -22,6 +22,7 @@ const roles_guard_1 = require("../auth/roles.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
 const create_user_dto_1 = require("./dto/create-user.dto");
 const client_1 = require("@prisma/client");
+const roles_decorator_2 = require("../auth/decorators/roles.decorator");
 const multer_1 = require("multer");
 const path_1 = require("path");
 let AdminController = class AdminController {
@@ -48,7 +49,7 @@ let AdminController = class AdminController {
             if (!email || !password || !name || !role) {
                 throw new common_1.BadRequestException('Email, password, name, and role are required');
             }
-            const validRoles = Object.values(client_1.Role);
+            const validRoles = Object.values(roles_decorator_2.Role);
             if (!validRoles.includes(role)) {
                 throw new common_1.BadRequestException(`Invalid role value: ${role}. Must be one of ${validRoles.join(', ')}`);
             }
@@ -69,13 +70,13 @@ let AdminController = class AdminController {
             if (isNaN(userId))
                 throw new common_1.BadRequestException('User ID must be a valid integer');
             if (data.role) {
-                const validRoles = Object.values(client_1.Role);
+                const validRoles = Object.values(roles_decorator_2.Role);
                 if (!validRoles.includes(data.role)) {
                     throw new common_1.BadRequestException(`Invalid role value: ${data.role}. Must be one of ${validRoles.join(', ')}`);
                 }
             }
             console.log('ℹ️ [AdminController] Updating user:', { id: userId, data });
-            const updatedUser = await this.adminService.updateUser(userId, data);
+            const updatedUser = await this.adminService.updateUser(userId, Object.assign(Object.assign({}, data), { role: data.role }));
             return { message: 'User updated successfully', data: updatedUser };
         }
         catch (error) {
@@ -114,53 +115,11 @@ let AdminController = class AdminController {
             throw new common_1.InternalServerErrorException('Failed to fetch events: ' + error.message);
         }
     }
-    async createEvent(file, body) {
+    async createEvent(data) {
         try {
-            const { title, description, date, organizerId, collaboratorIds, status, location, category, type, existingImageUrl } = body;
-            if (!title || typeof title !== 'string' || title.trim().length === 0) {
-                throw new common_1.BadRequestException('Title is required and must be a non-empty string');
-            }
-            if (!date || isNaN(new Date(date).getTime())) {
-                throw new common_1.BadRequestException('Date is required and must be a valid ISO date string');
-            }
-            if (!organizerId) {
-                throw new common_1.BadRequestException('Organizer ID is required');
-            }
-            if (!category || !Object.values(client_1.EventCategory).includes(category)) {
-                throw new common_1.BadRequestException(`Category must be one of ${Object.values(client_1.EventCategory).join(', ')}`);
-            }
-            if (!type || !Object.values(client_1.EventType).includes(type)) {
-                throw new common_1.BadRequestException(`Type must be one of ${Object.values(client_1.EventType).join(', ')}`);
-            }
-            const parsedOrganizerId = parseInt(organizerId);
-            if (isNaN(parsedOrganizerId)) {
-                throw new common_1.BadRequestException('Organizer ID must be a valid integer');
-            }
-            let parsedCollaboratorIds;
-            if (collaboratorIds) {
-                parsedCollaboratorIds = collaboratorIds.split(',').map(id => parseInt(id.trim()));
-                if (parsedCollaboratorIds.some(isNaN)) {
-                    throw new common_1.BadRequestException('Collaborator IDs must be valid integers');
-                }
-            }
-            const validatedStatus = status ? this.validateEventStatus(status) : undefined;
-            const validatedCategory = category;
-            const validatedType = type;
-            const imagePath = existingImageUrl || (file ? `/uploads/${file.filename}` : undefined);
-            console.log('ℹ️ [AdminController] Creating event:', { title, date, organizerId: parsedOrganizerId, collaboratorIds: parsedCollaboratorIds, imagePath });
-            const newEvent = await this.adminService.createEvent({
-                title,
-                description: description || '',
-                date,
-                organizerId: parsedOrganizerId,
-                collaboratorIds: parsedCollaboratorIds,
-                status: validatedStatus,
-                location,
-                image: imagePath,
-                category: validatedCategory,
-                type: validatedType,
-            });
-            return { message: 'Event created successfully', data: newEvent };
+            console.log('ℹ️ [AdminController] Creating event:', { data });
+            const event = await this.adminService.createEvent(data);
+            return { message: 'Event created successfully', data: event };
         }
         catch (error) {
             console.error('🚨 [AdminController] Error creating event:', error.message);
@@ -174,7 +133,7 @@ let AdminController = class AdminController {
             const eventId = parseInt(id);
             if (isNaN(eventId))
                 throw new common_1.BadRequestException('Event ID must be a valid integer');
-            const { title, description, date, organizerId, status, location, category, type, existingImageUrl } = body;
+            const { title, description, date, organizerId, status, location, category, type, existingImageUrl, registrationLink, pageContent, pageSettings } = body;
             if (title && (typeof title !== 'string' || title.trim().length === 0)) {
                 throw new common_1.BadRequestException('Title must be a non-empty string');
             }
@@ -208,6 +167,9 @@ let AdminController = class AdminController {
                 image: imagePath,
                 category: validatedCategory,
                 type: validatedType,
+                registrationLink,
+                pageContent,
+                pageSettings,
             });
             return { message: 'Event updated successfully', data: updatedEvent };
         }
@@ -300,27 +262,10 @@ __decorate([
 ], AdminController.prototype, "getAllEvents", null);
 __decorate([
     (0, common_1.Post)('events'),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('image', {
-        storage: (0, multer_1.diskStorage)({
-            destination: './uploads',
-            filename: (req, file, cb) => {
-                const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-                const ext = (0, path_1.extname)(file.originalname);
-                cb(null, `image-${uniqueSuffix}${ext}`);
-            },
-        }),
-        fileFilter: (req, file, cb) => {
-            if (!file.mimetype.match(/\/(jpg|jpeg|png)$/)) {
-                return cb(new common_1.BadRequestException('Only JPG, JPEG, and PNG files are allowed'), false);
-            }
-            cb(null, true);
-        },
-        limits: { fileSize: 5 * 1024 * 1024 },
-    })),
-    __param(0, (0, common_1.UploadedFile)()),
-    __param(1, (0, common_1.Body)()),
+    (0, roles_decorator_1.Roles)('ADMIN'),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "createEvent", null);
 __decorate([

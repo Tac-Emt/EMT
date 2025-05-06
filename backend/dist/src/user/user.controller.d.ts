@@ -23,7 +23,9 @@ export declare class UserController {
                     name: string;
                 };
             } & {
+                id: number;
                 createdAt: Date;
+                updatedAt: Date;
                 isHost: boolean;
                 pendingConfirmation: boolean;
                 expiresAt: Date;
@@ -37,12 +39,22 @@ export declare class UserController {
             title: string;
             description: string;
             date: Date;
-            status: import(".prisma/client").$Enums.EventStatus;
             location: string;
+            capacity: number;
+            status: import(".prisma/client").$Enums.EventStatus;
             image: string;
+            agenda: import("@prisma/client/runtime/library").JsonValue;
+            resources: import("@prisma/client/runtime/library").JsonValue;
             category: import(".prisma/client").$Enums.EventCategory;
             type: import(".prisma/client").$Enums.EventType;
             eventTag: string;
+            registrationLink: string;
+            seriesId: number;
+            checkedIn: boolean;
+            checkedInAt: Date;
+            slug: string;
+            pageContent: import("@prisma/client/runtime/library").JsonValue;
+            pageSettings: import("@prisma/client/runtime/library").JsonValue;
         })[];
     }>;
 }

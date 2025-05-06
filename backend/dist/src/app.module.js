@@ -18,7 +18,12 @@ const feed_module_1 = require("./feed/feed.module");
 const scheduler_module_1 = require("./scheduler/scheduler.module");
 const email_module_1 = require("./email/email.module");
 const event_module_1 = require("./event/event.module");
-const prisma_service_1 = require("./prisma.service");
+const registration_module_1 = require("./registration/registration.module");
+const speaker_module_1 = require("./speaker/speaker.module");
+const event_task_module_1 = require("./event-task/event-task.module");
+const check_in_module_1 = require("./check-in/check-in.module");
+const file_upload_module_1 = require("./file-upload/file-upload.module");
+const prisma_module_1 = require("./prisma/prisma.module");
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
@@ -29,6 +34,7 @@ AppModule = __decorate([
                 rootPath: (0, path_1.join)(__dirname, '..', 'Uploads'),
                 serveRoot: '/uploads',
             }),
+            prisma_module_1.PrismaModule,
             admin_module_1.AdminModule,
             user_module_1.UserModule,
             auth_module_1.AuthModule,
@@ -36,8 +42,12 @@ AppModule = __decorate([
             scheduler_module_1.SchedulerModule,
             email_module_1.EmailModule,
             event_module_1.EventModule,
+            registration_module_1.RegistrationModule,
+            speaker_module_1.SpeakerModule,
+            event_task_module_1.EventTaskModule,
+            check_in_module_1.CheckInModule,
+            file_upload_module_1.FileUploadModule,
         ],
-        providers: [prisma_service_1.PrismaService],
     })
 ], AppModule);
 exports.AppModule = AppModule;

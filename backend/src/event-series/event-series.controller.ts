@@ -1,9 +1,8 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { EventSeriesService } from './event-series.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { Roles, Role } from '../auth/decorators/roles.decorator';
 
 @Controller('event-series')
 @UseGuards(JwtAuthGuard, RolesGuard)

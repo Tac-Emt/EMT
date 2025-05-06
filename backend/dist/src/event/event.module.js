@@ -8,17 +8,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventModule = void 0;
 const common_1 = require("@nestjs/common");
-const event_controller_1 = require("./event.controller");
 const event_service_1 = require("./event.service");
-const email_module_1 = require("../email/email.module");
-const prisma_service_1 = require("../prisma.service");
+const event_controller_1 = require("./event.controller");
+const prisma_module_1 = require("../prisma/prisma.module");
+const file_upload_module_1 = require("../file-upload/file-upload.module");
 let EventModule = class EventModule {
 };
 EventModule = __decorate([
     (0, common_1.Module)({
-        imports: [email_module_1.EmailModule],
+        imports: [prisma_module_1.PrismaModule, file_upload_module_1.FileUploadModule],
         controllers: [event_controller_1.EventController],
-        providers: [event_service_1.EventService, prisma_service_1.PrismaService],
+        providers: [event_service_1.EventService],
+        exports: [event_service_1.EventService],
     })
 ], EventModule);
 exports.EventModule = EventModule;

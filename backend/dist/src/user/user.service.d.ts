@@ -1,4 +1,4 @@
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 export declare class UserService {
     private prisma;
     constructor(prisma: PrismaService);
@@ -18,7 +18,9 @@ export declare class UserService {
                 name: string;
             };
         } & {
+            id: number;
             createdAt: Date;
+            updatedAt: Date;
             isHost: boolean;
             pendingConfirmation: boolean;
             expiresAt: Date;
@@ -32,12 +34,22 @@ export declare class UserService {
         title: string;
         description: string;
         date: Date;
-        status: import(".prisma/client").$Enums.EventStatus;
         location: string;
+        capacity: number;
+        status: import(".prisma/client").$Enums.EventStatus;
         image: string;
+        agenda: import("@prisma/client/runtime/library").JsonValue;
+        resources: import("@prisma/client/runtime/library").JsonValue;
         category: import(".prisma/client").$Enums.EventCategory;
         type: import(".prisma/client").$Enums.EventType;
         eventTag: string;
+        registrationLink: string;
+        seriesId: number;
+        checkedIn: boolean;
+        checkedInAt: Date;
+        slug: string;
+        pageContent: import("@prisma/client/runtime/library").JsonValue;
+        pageSettings: import("@prisma/client/runtime/library").JsonValue;
     })[]>;
     deleteUser(id: number): Promise<{
         message: string;

@@ -8,15 +8,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FeedModule = void 0;
 const common_1 = require("@nestjs/common");
-const feed_service_1 = require("./feed.service");
 const feed_controller_1 = require("./feed.controller");
-const prisma_service_1 = require("../prisma.service");
+const feed_service_1 = require("./feed.service");
+const prisma_service_1 = require("../prisma/prisma.service");
 let FeedModule = class FeedModule {
 };
 FeedModule = __decorate([
     (0, common_1.Module)({
         controllers: [feed_controller_1.FeedController],
         providers: [feed_service_1.FeedService, prisma_service_1.PrismaService],
+        exports: [feed_service_1.FeedService],
     })
 ], FeedModule);
 exports.FeedModule = FeedModule;

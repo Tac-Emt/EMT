@@ -1,7 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
-import { SpeakerStatus } from '@prisma/client';
+
+export enum SpeakerStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  REJECTED = 'REJECTED',
+}
 
 @Injectable()
 export class SpeakerService {
@@ -9,6 +14,160 @@ export class SpeakerService {
     private prisma: PrismaService,
     private emailService: EmailService,
   ) {}
+
+  async createSpeaker(data: {
+    name: string;
+    email: string;
+    bio?: string;
+    photo?: string;
+    organization?: string;
+    title?: string;
+    socialLinks?: {
+      linkedin?: string;
+      twitter?: string;
+      website?: string;
+    };
+  }) {
+    return this.prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        bio: data.bio,
+        photo: data.photo,
+        organization: data.organization,
+        title: data.title,
+        socialLinks: data.socialLinks,
+        role: 'SPEAKER',
+        password: 'temporary-password-' + Math.random().toString(36).substring(2),
+      },
+    });
+  }
+
+  async getSpeakers() {
+    return this.prisma.user.findMany({
+      where: { role: 'SPEAKER' },
+      include: {
+        _count: {
+          select: {
+            speakerEvents: {
+              where: {
+                status: SpeakerStatus.ACCEPTED,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async getSpeaker(id: number) {
+    const speaker = await this.prisma.user.findFirst({
+      where: { 
+        id,
+        role: 'SPEAKER'
+      },
+      include: {
+        speakerEvents: {
+          include: {
+            event: true,
+          },
+        },
+      },
+    });
+
+    if (!speaker) {
+      throw new NotFoundException('Speaker not found');
+    }
+
+    return speaker;
+  }
+
+  async updateSpeaker(id: number, data: {
+    name?: string;
+    email?: string;
+    bio?: string;
+    photo?: string;
+    organization?: string;
+    title?: string;
+    socialLinks?: {
+      linkedin?: string;
+      twitter?: string;
+      website?: string;
+    };
+  }) {
+    const speaker = await this.prisma.user.findFirst({
+      where: { 
+        id,
+        role: 'SPEAKER'
+      },
+    });
+
+    if (!speaker) {
+      throw new NotFoundException('Speaker not found');
+    }
+
+    if (speaker.photo && data.photo && speaker.photo !== data.photo) {
+      // Delete old photo if exists
+      // await this.fileUploadService.deleteFile(speaker.photo);
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deleteSpeaker(id: number) {
+    const speaker = await this.prisma.user.findFirst({
+      where: { 
+        id,
+        role: 'SPEAKER'
+      },
+    });
+
+    if (!speaker) {
+      throw new NotFoundException('Speaker not found');
+    }
+
+    if (speaker.photo) {
+      // Delete photo if exists
+      // await this.fileUploadService.deleteFile(speaker.photo);
+    }
+
+    await this.prisma.user.delete({
+      where: { id },
+    });
+
+    return { message: 'Speaker deleted successfully' };
+  }
+
+  async getSpeakerStats(id: number) {
+    const speaker = await this.prisma.user.findFirst({
+      where: { 
+        id,
+        role: 'SPEAKER'
+      },
+      include: {
+        _count: {
+          select: {
+            speakerEvents: {
+              where: {
+                status: SpeakerStatus.ACCEPTED,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!speaker) {
+      throw new NotFoundException('Speaker not found');
+    }
+
+    return {
+      totalEvents: speaker._count.speakerEvents,
+    };
+  }
 
   async getSpeakerEvents(speakerId: number) {
     const events = await this.prisma.eventSpeaker.findMany({
@@ -120,12 +279,15 @@ export class SpeakerService {
   }
 
   async getSpeakerProfile(speakerId: number) {
-    const speaker = await this.prisma.user.findUnique({
-      where: { id: speakerId },
+    const speaker = await this.prisma.user.findFirst({
+      where: { 
+        id: speakerId,
+        role: 'SPEAKER'
+      },
       include: {
         _count: {
           select: {
-            EventSpeaker: {
+            speakerEvents: {
               where: {
                 status: SpeakerStatus.ACCEPTED,
               },
@@ -143,7 +305,7 @@ export class SpeakerService {
       id: speaker.id,
       name: speaker.name,
       email: speaker.email,
-      totalEvents: speaker._count.EventSpeaker,
+      totalEvents: speaker._count.speakerEvents,
     };
   }
 } 

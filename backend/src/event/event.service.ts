@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FileUploadService } from '../file-upload/file-upload.service';
+import { Prisma } from '@prisma/client';
+
+type EventStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
+type EventCategory = 'CS' | 'RAS' | 'IAS' | 'WIE';
+type EventType = 'CONGRESS' | 'CONFERENCE' | 'HACKATHON' | 'NORMAL' | 'ONLINE';
 
 @Injectable()
 export class EventService {
@@ -9,39 +14,104 @@ export class EventService {
     private fileUploadService: FileUploadService,
   ) {}
 
+  async create(data: any) {
+    return this.prisma.event.create({ data });
+  }
+
+  async findAll() {
+    return this.prisma.event.findMany();
+  }
+
+  async findOne(id: number) {
+    return this.prisma.event.findUnique({ where: { id } });
+  }
+
+  async update(id: number, data: any) {
+    return this.prisma.event.update({ where: { id }, data });
+  }
+
+  async remove(id: number) {
+    return this.prisma.event.delete({ where: { id } });
+  }
+
   async createEvent(data: {
     title: string;
     description: string;
-    startDate: Date;
-    endDate: Date;
+    date: Date;
     location: string;
-    capacity: number;
-    imageUrl?: string;
+    image?: string;
+    category: EventCategory;
+    type: EventType;
+    eventTag: string;
     organizerId: number;
   }) {
-    try {
-      return await this.prisma.event.create({
-        data,
-        include: {
-          organizer: true,
+    return this.prisma.event.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        date: data.date,
+        location: data.location,
+        image: data.image,
+        category: data.category,
+        type: data.type,
+        eventTag: data.eventTag,
+        status: 'DRAFT' as EventStatus,
+        capacity: 0,
+        slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.random().toString(36).substring(2, 8),
+        organizers: {
+          create: {
+            organizerId: data.organizerId,
+            isHost: true,
+          },
         },
-      });
-    } catch (error) {
-      throw new BadRequestException('Failed to create event: ' + error.message);
-    }
+      },
+      include: {
+        organizers: {
+          include: {
+            organizer: true,
+          },
+        },
+      },
+    });
   }
 
-  async getEvents(filters?: {
+  async getEvents(filters: {
     organizerId?: number;
     startDate?: Date;
     endDate?: Date;
   }) {
     return this.prisma.event.findMany({
-      where: filters,
+      where: {
+        ...(filters.organizerId && {
+          organizers: {
+            some: {
+              organizerId: filters.organizerId,
+            },
+          },
+        }),
+        ...(filters.startDate && {
+          date: {
+            gte: filters.startDate,
+          },
+        }),
+        ...(filters.endDate && {
+          date: {
+            lte: filters.endDate,
+          },
+        }),
+      },
       include: {
-        organizer: true,
-        resources: true,
-        speakers: true,
+        organizers: {
+          include: {
+            organizer: true,
+          },
+        },
+        eventResources: true,
+        speakers: {
+          include: {
+            speaker: true,
+          },
+        },
       },
     });
   }
@@ -50,9 +120,17 @@ export class EventService {
     const event = await this.prisma.event.findUnique({
       where: { id },
       include: {
-        organizer: true,
-        resources: true,
-        speakers: true,
+        organizers: {
+          include: {
+            organizer: true,
+          },
+        },
+        eventResources: true,
+        speakers: {
+          include: {
+            speaker: true,
+          },
+        },
       },
     });
 
@@ -66,51 +144,63 @@ export class EventService {
   async updateEvent(id: number, data: {
     title?: string;
     description?: string;
-    startDate?: Date;
-    endDate?: Date;
+    date?: Date;
+    status?: EventStatus;
     location?: string;
-    capacity?: number;
-    imageUrl?: string;
+    image?: string;
+    category?: EventCategory;
+    type?: EventType;
+    eventTag?: string;
   }) {
-    try {
-      return await this.prisma.event.update({
-        where: { id },
-        data,
-        include: {
-          organizer: true,
+    const event = await this.prisma.event.findUnique({
+      where: { id },
+      include: {
+        organizers: {
+          include: {
+            organizer: true,
+          },
         },
-      });
-    } catch (error) {
-      if (error.code === 'P2025') {
-        throw new NotFoundException('Event not found');
-      }
-      throw new BadRequestException('Failed to update event: ' + error.message);
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
     }
+
+    if (event.image && data.image && event.image !== data.image) {
+      await this.fileUploadService.deleteFile(event.image);
+    }
+
+    return this.prisma.event.update({
+      where: { id },
+      data,
+      include: {
+        organizers: {
+          include: {
+            organizer: true,
+          },
+        },
+      },
+    });
   }
 
   async deleteEvent(id: number) {
-    try {
-      const event = await this.prisma.event.findUnique({
-        where: { id },
-      });
+    const event = await this.prisma.event.findUnique({
+      where: { id },
+    });
 
-      if (!event) {
-        throw new NotFoundException('Event not found');
-      }
-
-      // Delete event image if exists
-      if (event.imageUrl) {
-        await this.fileUploadService.deleteFile(event.imageUrl);
-      }
-
-      // Delete the event from database
-      await this.prisma.event.delete({
-        where: { id },
-      });
-
-      return { message: 'Event deleted successfully' };
-    } catch (error) {
-      throw new BadRequestException('Failed to delete event: ' + error.message);
+    if (!event) {
+      throw new NotFoundException('Event not found');
     }
+
+    if (event.image) {
+      await this.fileUploadService.deleteFile(event.image);
+    }
+
+    await this.prisma.event.delete({
+      where: { id },
+    });
+
+    return { message: 'Event deleted successfully' };
   }
 } 

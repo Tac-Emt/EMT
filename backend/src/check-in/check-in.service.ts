@@ -1,97 +1,103 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class CheckInService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
 
   async generateCheckInCode(eventId: number) {
-    try {
-      // Generate a random 6-digit code
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-      return await this.prisma.checkInCode.create({
-        data: {
-          eventId,
-          code,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
-        },
-        include: {
-          event: true,
-        },
-      });
-    } catch (error) {
-      throw new BadRequestException('Failed to generate check-in code: ' + error.message);
-    }
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    return this.prisma.checkInCode.create({
+      data: {
+        code,
+        event: { connect: { id: eventId } },
+      },
+    });
   }
 
-  async validateCheckInCode(eventId: number, code: string) {
+  async validateCheckInCode(code: string) {
     const checkInCode = await this.prisma.checkInCode.findFirst({
       where: {
-        eventId,
         code,
-        expiresAt: {
-          gt: new Date(),
-        },
+        used: false,
+      },
+      include: {
+        event: true,
       },
     });
 
     if (!checkInCode) {
-      throw new BadRequestException('Invalid or expired check-in code');
+      throw new NotFoundException('Invalid or expired check-in code');
     }
 
     return checkInCode;
   }
 
-  async checkInUser(eventId: number, userId: number, code: string) {
-    try {
-      // Validate the check-in code
-      await this.validateCheckInCode(eventId, code);
+  async checkInUser(data: {
+    eventId: number;
+    userId: number;
+    code: string;
+  }) {
+    const checkInCode = await this.validateCheckInCode(data.code);
 
-      // Check if user is registered for the event
-      const registration = await this.prisma.registration.findFirst({
-        where: {
-          eventId,
-          userId,
-        },
-      });
-
-      if (!registration) {
-        throw new BadRequestException('User is not registered for this event');
-      }
-
-      // Check if user is already checked in
-      const existingCheckIn = await this.prisma.checkIn.findFirst({
-        where: {
-          eventId,
-          userId,
-        },
-      });
-
-      if (existingCheckIn) {
-        throw new BadRequestException('User is already checked in');
-      }
-
-      // Create check-in record
-      return await this.prisma.checkIn.create({
-        data: {
-          eventId,
-          userId,
-          checkedInAt: new Date(),
-        },
-        include: {
-          user: true,
-          event: true,
-        },
-      });
-    } catch (error) {
-      throw new BadRequestException('Failed to check in user: ' + error.message);
+    if (checkInCode.eventId !== data.eventId) {
+      throw new BadRequestException('Check-in code is not valid for this event');
     }
+
+    const registration = await this.prisma.registration.findFirst({
+      where: {
+        eventId: data.eventId,
+        userId: data.userId,
+      },
+    });
+
+    if (!registration) {
+      throw new NotFoundException('Registration not found');
+    }
+
+    if (registration.checkedIn) {
+      throw new BadRequestException('User is already checked in');
+    }
+
+    // Update registration with check-in
+    const updatedRegistration = await this.prisma.registration.update({
+      where: { id: registration.id },
+      data: {
+        checkedIn: true,
+        checkedInAt: new Date(),
+        checkInCode: {
+          connect: { id: checkInCode.id },
+        },
+      },
+      include: {
+        user: true,
+        event: true,
+      },
+    });
+
+    // Mark check-in code as used
+    await this.prisma.checkInCode.update({
+      where: { id: checkInCode.id },
+      data: {
+        used: true,
+        usedAt: new Date(),
+      },
+    });
+
+    return updatedRegistration;
   }
 
   async getEventCheckIns(eventId: number) {
-    return this.prisma.checkIn.findMany({
-      where: { eventId },
+    return this.prisma.registration.findMany({
+      where: {
+        eventId,
+        checkedIn: true,
+      },
       include: {
         user: true,
       },
@@ -99,28 +105,33 @@ export class CheckInService {
   }
 
   async getUserCheckIns(userId: number) {
-    return this.prisma.checkIn.findMany({
-      where: { userId },
+    return this.prisma.registration.findMany({
+      where: {
+        userId,
+        checkedIn: true,
+      },
       include: {
         event: true,
       },
     });
   }
 
-  async getCheckInStats(eventId: number) {
-    const [totalRegistrations, totalCheckIns] = await Promise.all([
-      this.prisma.registration.count({
-        where: { eventId },
-      }),
-      this.prisma.checkIn.count({
-        where: { eventId },
-      }),
-    ]);
+  async getEventCheckInStats(eventId: number) {
+    const totalRegistrations = await this.prisma.registration.count({
+      where: { eventId },
+    });
+
+    const checkedInCount = await this.prisma.registration.count({
+      where: {
+        eventId,
+        checkedIn: true,
+      },
+    });
 
     return {
       totalRegistrations,
-      totalCheckIns,
-      checkInRate: totalRegistrations > 0 ? (totalCheckIns / totalRegistrations) * 100 : 0,
+      checkedInCount,
+      checkInRate: totalRegistrations > 0 ? (checkedInCount / totalRegistrations) * 100 : 0,
     };
   }
 } 

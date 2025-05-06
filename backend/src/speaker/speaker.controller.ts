@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Put,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -13,12 +15,77 @@ import { SpeakerService } from './speaker.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { Role } from '../auth/roles';
 
-@Controller('speaker')
+@Controller('speakers')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('SPEAKER')
 export class SpeakerController {
   constructor(private speakerService: SpeakerService) {}
+
+  @Post()
+  @Roles(Role.ORGANIZER, Role.ADMIN)
+  async createSpeaker(
+    @Body() data: {
+      name: string;
+      email: string;
+      bio?: string;
+      photo?: string;
+      organization?: string;
+      title?: string;
+      socialLinks?: {
+        linkedin?: string;
+        twitter?: string;
+        website?: string;
+      };
+    },
+  ) {
+    return this.speakerService.createSpeaker(data);
+  }
+
+  @Get()
+  @Roles(Role.USER, Role.ORGANIZER, Role.ADMIN)
+  async getSpeakers() {
+    return this.speakerService.getSpeakers();
+  }
+
+  @Get(':id')
+  @Roles(Role.USER, Role.ORGANIZER, Role.ADMIN)
+  async getSpeaker(@Param('id') id: string) {
+    return this.speakerService.getSpeaker(+id);
+  }
+
+  @Put(':id')
+  @Roles(Role.ORGANIZER, Role.ADMIN)
+  async updateSpeaker(
+    @Param('id') id: string,
+    @Body() data: {
+      name?: string;
+      email?: string;
+      bio?: string;
+      photo?: string;
+      organization?: string;
+      title?: string;
+      socialLinks?: {
+        linkedin?: string;
+        twitter?: string;
+        website?: string;
+      };
+    },
+  ) {
+    return this.speakerService.updateSpeaker(+id, data);
+  }
+
+  @Delete(':id')
+  @Roles(Role.ORGANIZER, Role.ADMIN)
+  async deleteSpeaker(@Param('id') id: string) {
+    return this.speakerService.deleteSpeaker(+id);
+  }
+
+  @Get(':id/stats')
+  @Roles(Role.USER, Role.ORGANIZER, Role.ADMIN)
+  async getSpeakerStats(@Param('id') id: string) {
+    return this.speakerService.getSpeakerStats(+id);
+  }
 
   @Get('events')
   async getSpeakerEvents(@Body('speakerId') speakerId: number) {

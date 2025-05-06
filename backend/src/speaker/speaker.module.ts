@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
 import { SpeakerController } from './speaker.controller';
 import { SpeakerService } from './speaker.service';
-import { PrismaService } from '../prisma.service';
-import { EmailService } from '../email/email.service';
+import { SpeakerFeedbackController } from './speaker-feedback.controller';
+import { SpeakerFeedbackService } from './speaker-feedback.service';
+import { EmailModule } from '../email/email.module';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
-  controllers: [SpeakerController],
-  providers: [SpeakerService, PrismaService, EmailService],
-  exports: [SpeakerService],
+  imports: [EmailModule],
+  controllers: [SpeakerController, SpeakerFeedbackController],
+  providers: [SpeakerService, SpeakerFeedbackService, PrismaService],
+  exports: [SpeakerService, SpeakerFeedbackService],
 })
 export class SpeakerModule {} 

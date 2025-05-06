@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { UserService } from '../user/user.service';
 import { EmailService } from '../email/email.service';
-import { EventStatus, EventCategory, EventType, Role } from '.prisma/client';
+import { Role } from '../auth/decorators/roles.decorator';
+import { EventStatus, EventCategory, EventType, SpeakerStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -47,7 +48,7 @@ export class AdminService {
     });
   }
 
-  async updateUser(id: number, data: { email?: string; name?: string; role?: string }) {
+  async updateUser(id: number, data: { email?: string; name?: string; role?: Role }) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -58,15 +59,12 @@ export class AdminService {
         throw new ConflictException('Email is already in use by another user');
       }
     }
-    if (data.role) {
-      const validRoles = Object.values(Role);
-      if (!validRoles.includes(data.role as Role)) {
-        throw new BadRequestException(`Invalid role value: ${data.role}. Must be one of ${validRoles.join(', ')}`);
-      }
+    if (data.role && !Object.values(Role).includes(data.role)) {
+      throw new BadRequestException(`Invalid role value: ${data.role}. Must be one of ${Object.values(Role).join(', ')}`);
     }
     return this.prisma.user.update({
       where: { id },
-      data: { email: data.email, name: data.name, role: data.role as Role },
+      data: { email: data.email, name: data.name, role: data.role },
       select: { id: true, email: true, name: true, role: true, isEmailVerified: true, createdAt: true, updatedAt: true },
     });
   }
@@ -131,7 +129,7 @@ export class AdminService {
       const organizers = await this.prisma.user.findMany({
         where: {
           id: { in: data.organizerIds },
-          role: 'ORGANIZER',
+          role: Role.ORGANIZER,
         },
       });
 
@@ -146,9 +144,10 @@ export class AdminService {
       const event = await this.prisma.event.create({
         data: {
           title: data.title,
-          description: data.description,
+          description: data.description || '',
           date: eventDate,
-          location: data.location,
+          location: data.location || '',
+          capacity: 0,
           image: data.image,
           category: data.category,
           type: data.type,
@@ -160,7 +159,7 @@ export class AdminService {
           organizers: {
             create: data.organizerIds.map((organizerId, index) => ({
               organizerId,
-              isHost: index === 0, // First organizer is the host
+              isHost: index === 0,
             })),
           },
           speakers: data.speakerRequests ? {
@@ -168,7 +167,7 @@ export class AdminService {
               speakerId: request.speakerId,
               topic: request.topic,
               description: request.description,
-              status: 'PENDING',
+              status: SpeakerStatus.PENDING,
             })),
           } : undefined,
         },
@@ -244,7 +243,7 @@ export class AdminService {
       where: { id: eventId },
       include: { organizers: { include: { organizer: true } } },
     });
-    if (!event || event.status !== 'DRAFT') {
+    if (!event || event.status !== EventStatus.DRAFT) {
       throw new NotFoundException('Event not found or not in DRAFT status');
     }
 
